@@ -17,7 +17,7 @@
 import * as THREE from 'three';
 const host=document.querySelector('#scene'),loading=document.querySelector('#loading');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x9aa99a);scene.fog=new THREE.FogExp2(0x9aa99a,.018);
-const camera=new THREE.PerspectiveCamera( sixty=62,innerWidth/innerHeight,.1,260);
+const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,260);
 const renderer=new THREE.WebGLRenderer({antialias:innerWidth>700,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,1.7));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;host.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xd9e6d8,0x263128,2.0));
