@@ -187,7 +187,7 @@ function createAnimatedOpponent(template,x,z){
  const root=cloneSkeleton(template.gltf.scene);
  fitCharacter(root,1.65);
  const wrapper=new THREE.Group();wrapper.add(root);wrapper.position.set(x,0,z);scene.add(wrapper);
- const animation=addCharacterAnimations(template.gltf,'walk');
+ const animation=addCharacterAnimations({scene:root,animations:template.gltf.animations},'walk');
  return {group:wrapper,mixer:animation.mixer,actions:animation.actions,active:animation.active,speed:2.15,stun:0};
 }
 function setOpponentLocomotion(bot,moving){
