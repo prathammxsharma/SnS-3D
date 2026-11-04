@@ -68,7 +68,6 @@ const rainField=new THREE.Points(rainGeo,rainMat);rainField.frustumCulled=false;
 const waterMat=new THREE.MeshStandardMaterial({color:0x344f50,roughness:.22,metalness:.12,transparent:true,opacity:.82});
 const stream=new THREE.Mesh(new THREE.PlaneGeometry(3.8,95,1,48),waterMat);stream.rotation.x=-Math.PI/2;stream.rotation.z=Math.PI/2;stream.position.set(42,-.015,-3.8);scene.add(stream);
 const waterPositions=stream.geometry.attributes.position;
-const station=new THREE.Group();const concrete=mat(0x686b5d),metal=mat(0x343e3a,.55),warm= new THREE.MeshStandardMaterial({color:0xe5b76a,emissive:0x8d5420,emissiveIntensity:1.4});
 function block(parent,geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
 function facade(parent,x,z,w,h,d,color,windows=true){
  const wall=mat(color),darkWall=mat(0x202923),glass=new THREE.MeshStandardMaterial({color:0x78949a,roughness:.24,metalness:.25,emissive:0x172b30,emissiveIntensity:.25});
