@@ -141,9 +141,7 @@ async function loadLocalCharacters(){
  console.info('Loaded playable avatar:',main.animations.map(a=>a.name));
  loading.remove();
  tick();
- // Start the world immediately; stream NPCs in one at a time after the player appears.
- loading.textContent='LOADING FOREST CHARACTERS…';
- loadForestNpcs().catch(err=>console.warn('NPC loading interrupted:',err));
+ // Level 01 is a solitary environmental journey; no combat NPCs are spawned.
 }let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-92,0,0);
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
 const elapsed=clock.elapsedTime;
