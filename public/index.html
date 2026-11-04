@@ -4,12 +4,12 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101915"><title>Forest Explorer | 3D Field Test</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101915;color:#eee8d8;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#scene{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}.hud{position:fixed;inset:0;pointer-events:none}.brand{position:absolute;top:calc(env(safe-area-inset-top) + 18px);left:22px;font-size:11px;font-weight:700;letter-spacing:.32em;color:#e7e0ccbb}.chapter{position:absolute;right:22px;top:calc(env(safe-area-inset-top) + 16px);text-align:right;font-size:9px;letter-spacing:.22em;color:#e7e0cc88}.chapter strong{display:block;margin-top:4px;font:italic 22px Georgia,serif;letter-spacing:.02em;color:#eee7d5}.status{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);padding:10px 15px;border:1px solid #e5dec33d;background:#101915a8;backdrop-filter:blur(10px);font-size:11px;letter-spacing:.06em;white-space:nowrap;color:#e9e3d4}.touch-look{display:none;position:absolute;right:0;top:12%;width:62%;height:72%;pointer-events:auto;touch-action:none;background:transparent}.mobile-controls{display:none;position:absolute;inset:0;pointer-events:none}.stick-base{position:absolute;left:24px;bottom:calc(env(safe-area-inset-bottom) + 26px);width:124px;height:124px;border:1px solid #e5dec388;border-radius:50%;background:#10191566;backdrop-filter:blur(6px);pointer-events:auto;touch-action:none}.stick-knob{position:absolute;left:50%;top:50%;width:52px;height:52px;transform:translate(-50%,-50%);border:1px solid #f1ead8aa;border-radius:50%;background:#d8d0b755;box-shadow:0 2px 12px #0005;pointer-events:none}.jump{position:absolute;right:28px;bottom:calc(env(safe-area-inset-bottom) + 42px);width:72px;height:72px;border:1px solid #e5dec388;border-radius:50%;background:#101915aa;color:#f1ead8;font-size:24px;pointer-events:auto;touch-action:none;backdrop-filter:blur(8px)}.touch-hint{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom) + 168px);transform:translateX(-50%);font-size:9px;letter-spacing:.12em;color:#eee8d8bb;white-space:nowrap;text-shadow:0 1px 4px #000}@media(max-width:700px){.mobile-controls{display:block}.touch-look{display:block}.status{bottom:calc(env(safe-area-inset-bottom) + 250px);font-size:9px}.chapter strong{font-size:18px}}#loading{position:fixed;inset:0;display:grid;place-items:center;background:#101915;color:#e8e0ca;letter-spacing:.22em;font-size:11px;z-index:3;text-align:center;padding:24px}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101915;color:#eee8d8;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#scene{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}.hud{position:fixed;inset:0;pointer-events:none}.brand{position:absolute;top:calc(env(safe-area-inset-top) + 18px);left:22px;font-size:11px;font-weight:700;letter-spacing:.32em;color:#e7e0ccbb}.chapter{position:absolute;right:22px;top:calc(env(safe-area-inset-top) + 16px);text-align:right;font-size:9px;letter-spacing:.22em;color:#e7e0cc88}.chapter strong{display:block;margin-top:4px;font:italic 22px Georgia,serif;letter-spacing:.02em;color:#eee7d5}.status{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);padding:10px 15px;border:1px solid #e5dec33d;background:#101915a8;backdrop-filter:blur(10px);font-size:11px;letter-spacing:.06em;white-space:nowrap;color:#e9e3d4}.touch-look{display:none}.run,.grab{position:absolute;right:28px;width:64px;height:64px;border:1px solid #e5dec388;border-radius:50%;background:#101915aa;color:#f1ead8;font-size:24px;pointer-events:auto;touch-action:none;backdrop-filter:blur(8px)}.run{bottom:calc(env(safe-area-inset-bottom) + 126px)}.grab{bottom:calc(env(safe-area-inset-bottom) + 210px);font-size:20px}.mobile-controls{display:none;position:absolute;inset:0;pointer-events:none}.stick-base{position:absolute;left:24px;bottom:calc(env(safe-area-inset-bottom) + 26px);width:124px;height:124px;border:1px solid #e5dec388;border-radius:50%;background:#10191566;backdrop-filter:blur(6px);pointer-events:auto;touch-action:none}.stick-knob{position:absolute;left:50%;top:50%;width:52px;height:52px;transform:translate(-50%,-50%);border:1px solid #f1ead8aa;border-radius:50%;background:#d8d0b755;box-shadow:0 2px 12px #0005;pointer-events:none}.jump{position:absolute;right:28px;bottom:calc(env(safe-area-inset-bottom) + 42px);width:72px;height:72px;border:1px solid #e5dec388;border-radius:50%;background:#101915aa;color:#f1ead8;font-size:24px;pointer-events:auto;touch-action:none;backdrop-filter:blur(8px)}@media(max-width:700px){.mobile-controls{display:block}}#loading{position:fixed;inset:0;display:grid;place-items:center;background:#101915;color:#e8e0ca;letter-spacing:.22em;font-size:11px;z-index:3;text-align:center;padding:24px}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body><div id="loading">PREPARING THE FOREST…</div><div id="scene"></div>
-<div class="hud"><div class="brand">FOREST EXPLORER</div><div class="chapter">3D ENVIRONMENT TEST<strong>THE QUIET FOREST</strong></div><div class="status">LEFT STICK: MOVE · DRAG RIGHT SIDE: LOOK · JUMP: BUTTON</div><div id="touchLook" class="touch-look" aria-label="Drag to rotate camera"></div><div class="mobile-controls"><div id="stickBase" class="stick-base" aria-label="Movement joystick"><div id="stickKnob" class="stick-knob"></div></div><button id="jump" class="jump" aria-label="Jump">↑</button><div class="touch-hint">LEFT STICK TO MOVE · DRAG SCREEN TO LOOK</div></div></div>
+<div class="hud"><div class="mobile-controls"><div id="stickBase" class="stick-base" aria-label="Move left and right"><div id="stickKnob" class="stick-knob"></div></div><button id="jump" class="jump" aria-label="Jump">↑</button><button id="run" class="run" aria-label="Run">»</button><button id="grab" class="grab" aria-label="Grab or interact">✋</button></div></div>
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -26,7 +26,7 @@ function noiseTexture(base,variation=22){const c=document.createElement('canvas'
 const groundMat=new THREE.MeshStandardMaterial({color:0x89907b,map:noiseTexture('#465440',24),roughness:1}),pathMat=new THREE.MeshStandardMaterial({color:0x9b8a67,map:noiseTexture('#625b43',18),roughness:1}),barkMat=mat(0x493b2d),leafMats=[mat(0x263f30),mat(0x34533b),mat(0x405b40),mat(0x1d3529)];
 const skyCanvas=document.createElement('canvas');skyCanvas.width=2;skyCanvas.height=256;const skyCtx=skyCanvas.getContext('2d'),skyGrad=skyCtx.createLinearGradient(0,0,0,256);skyGrad.addColorStop(0,'#708b91');skyGrad.addColorStop(.52,'#b4b9a2');skyGrad.addColorStop(1,'#67745f');skyCtx.fillStyle=skyGrad;skyCtx.fillRect(0,0,2,256);const skyTex=new THREE.CanvasTexture(skyCanvas);const sky=new THREE.Mesh(new THREE.SphereGeometry(220,24,16),new THREE.MeshBasicMaterial({map:skyTex,side:THREE.BackSide,depthWrite:false,fog:false}));sky.renderOrder=-10;scene.add(sky);
 const groundGeo=new THREE.PlaneGeometry(240,240,90,90);groundGeo.rotateX(-Math.PI/2);const pos=groundGeo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,Math.sin(x*.18)*.12+Math.cos(z*.14)*.1+Math.sin((x+z)*.08)*.08)}groundGeo.computeVertexNormals();const ground=new THREE.Mesh(groundGeo,groundMat);ground.receiveShadow=true;scene.add(ground);
-const path=new THREE.Mesh(new THREE.PlaneGeometry(5.4,230),pathMat);path.rotation.x=-Math.PI/2;path.position.set(0,.025,-12);path.receiveShadow=true;scene.add(path);
+const path=new THREE.Mesh(new THREE.PlaneGeometry(230,5.4),pathMat);path.rotation.x=-Math.PI/2;path.position.set(0,.025,0);path.receiveShadow=true;scene.add(path);
 const trunkGeo=new THREE.CylinderGeometry(.22,.42,1,8),crownGeo=new THREE.IcosahedronGeometry(1,0),proceduralTrees=[];
 const treeTrunks=new THREE.InstancedMesh(trunkGeo,barkMat,90);
 const treeCrowns=leafMats.map(m=>new THREE.InstancedMesh(crownGeo,m,90*25));
@@ -48,20 +48,7 @@ const rockGeo=new THREE.DodecahedronGeometry(1,0),rockMat=mat(0x626657),procedur
 const fernMat=mat(0x536b45),proceduralFerns=[];for(let i=0;i<48;i++){const x=(rand()<.5?-1:1)*(4+rand()*18),z=18-rand()*150,group=new THREE.Group();group.position.set(x,0,z);for(let j=0;j<5;j++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.13,1.25,5),fernMat);leaf.position.set((rand()-.5)*.6,.48,(rand()-.5)*.6);leaf.rotation.z=(rand()-.5)*1.4;leaf.rotation.x=(rand()-.5)*.8;group.add(leaf)}scene.add(group);proceduralFerns.push(group)}
 /* THE QUIET FOREST: Level 01 environmental simulation */
 const worldState={wind:0.35,windDirection:new THREE.Vector3(1,0,.25).normalize(),rain:0,wetness:0,temperature:18,chapter:0,radioFound:false};
-const chapterNames=['THE AWAKENING','THE FIRST STORM','THE FALLEN GIANT','THE LAST SIGNAL'];
-const chapterCopy=[
- 'A quiet forest. Your footsteps are the only thing that answers.',
- 'The wind is changing. Find shelter among the trees.',
- 'The storm has changed the path. Follow the water downhill.',
- 'An abandoned research station. Something is still transmitting.'
-];
-const chapterEl=document.querySelector('.chapter strong');
-const statusEl=document.querySelector('.status');
-const storyToast=document.createElement('div');
-storyToast.style.cssText='position:fixed;left:50%;top:19%;transform:translateX(-50%);max-width:min(88vw,520px);padding:13px 18px;background:#101915b8;border:1px solid #e5dec355;color:#eee8d8;text-align:center;font:italic 16px Georgia,serif;letter-spacing:.025em;opacity:0;transition:opacity 1.2s;pointer-events:none;backdrop-filter:blur(8px);z-index:2';
-document.body.appendChild(storyToast);
-let toastUntil=0,lastChapter=-1;
-function showStory(text,duration=4.5){storyToast.textContent=text;storyToast.style.opacity='1';toastUntil=performance.now()+duration*1000}
+let lastChapter=-1;
 const windLeaves=proceduralFerns.map((g,i)=>({g,phase:rand()*6.28,base:g.rotation.z}));
 const rainCount=650,rainPositions=new Float32Array(rainCount*3),rainGeo=new THREE.BufferGeometry();
 for(let i=0;i<rainCount;i++){rainPositions[i*3]=(rand()-.5)*34;rainPositions[i*3+1]=rand()*18;rainPositions[i*3+2]=(rand()-.5)*42}
@@ -69,7 +56,7 @@ rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
 const rainMat=new THREE.PointsMaterial({color:0xc5d8d6,size:.075,transparent:true,opacity:0,depthWrite:false});
 const rainField=new THREE.Points(rainGeo,rainMat);rainField.frustumCulled=false;scene.add(rainField);
 const waterMat=new THREE.MeshStandardMaterial({color:0x344f50,roughness:.22,metalness:.12,transparent:true,opacity:.82});
-const stream=new THREE.Mesh(new THREE.PlaneGeometry(3.8,95,1,48),waterMat);stream.rotation.x=-Math.PI/2;stream.position.set(-6.5,-.015,-38);scene.add(stream);
+const stream=new THREE.Mesh(new THREE.PlaneGeometry(3.8,95,1,48),waterMat);stream.rotation.x=-Math.PI/2;stream.rotation.z=Math.PI/2;stream.position.set(30,-.015,0);scene.add(stream);
 const waterPositions=stream.geometry.attributes.position;
 const station=new THREE.Group();const concrete=mat(0x686b5d),metal=mat(0x343e3a,.55),warm= new THREE.MeshStandardMaterial({color:0xe5b76a,emissive:0x8d5420,emissiveIntensity:1.4});
 function block(parent,geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
@@ -77,22 +64,22 @@ block(station,new THREE.BoxGeometry(9,4.8,6),concrete,0,2.4,0);
 block(station,new THREE.BoxGeometry(3.2,2.6,.18),metal,0,1.35,3.08);
 block(station,new THREE.BoxGeometry(1.2,.18,.18),warm,0,2.35,3.2);
 block(station,new THREE.BoxGeometry(2.1,.16,.16),metal,0,4.95,0);
-station.position.set(0,0,-91);scene.add(station);
-const radio=new THREE.Group();block(radio,new THREE.BoxGeometry(.55,.22,.34),metal,0,0,0);block(radio,new THREE.BoxGeometry(.08,.5,.08),warm,.18,.32,-.02);radio.position.set(0,1.1,-87.65);scene.add(radio);
-const interactButton=document.createElement('button');
-interactButton.textContent='E  ·  EXAMINE';interactButton.style.cssText='display:none;position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 205px);transform:translateX(-50%);padding:12px 20px;border:1px solid #e5dec388;background:#101915dd;color:#eee8d8;letter-spacing:.12em;z-index:4;touch-action:manipulation';
+station.position.set(78,0,0);scene.add(station);
+const radio=new THREE.Group();block(radio,new THREE.BoxGeometry(.55,.22,.34),metal,0,0,0);block(radio,new THREE.BoxGeometry(.08,.5,.08),warm,.18,.32,-.02);radio.position.set(73.5,1.1,0);scene.add(radio);
+const interactButton=document.createElement('button');interactButton.textContent='✋';interactButton.setAttribute('aria-label','Interact');interactButton.style.cssText='display:none;position:fixed;right:28px;bottom:calc(env(safe-area-inset-bottom) + 210px);width:64px;height:64px;border:1px solid #e5dec388;border-radius:50%;background:#101915dd;color:#eee8d8;font-size:20px;z-index:4;touch-action:manipulation';
 document.body.appendChild(interactButton);
-function examineRadio(){if(worldState.radioFound)return;worldState.radioFound=true;showStory('“The forest is not dying. It is responding.”',8);chapterEl.textContent='THE LAST SIGNAL';statusEl.textContent='SIGNAL FOUND · THE FOREST REMEMBERS';interactButton.style.display='none'}
+function examineRadio(){if(worldState.radioFound)return;worldState.radioFound=true;interactButton.style.display='none'}
 interactButton.addEventListener('click',examineRadio);
 addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'&&interactButton.style.display!=='none')examineRadio()});
-showStory('A quiet forest. Your footsteps are the only thing that answers.',5);
 
+
+const crateMat=mat(0x65503a),crate=new THREE.Mesh(new THREE.BoxGeometry(1.15,1.15,1.15),crateMat);crate.position.set(-22,.58,0);crate.castShadow=true;crate.receiveShadow=true;scene.add(crate);let crateVelocity=0,crateHeld=false;
 const player=new THREE.Group();scene.add(player);const suit=mat(0x303b36,.72),cloth=mat(0x59604e),skin=mat(0xc6a98a),dark=mat(0x202722);
 function part(geo,m,x,y,z,sx=1,sy=1,sz=1){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;player.add(o);return o}
 part(new THREE.CapsuleGeometry(.34,.72,5,8),suit,0,1.05,0,.8,1,.55);part(new THREE.SphereGeometry(.25,12,10),skin,0,1.83,0,.88,1,.85);part(new THREE.BoxGeometry(.54,.35,.34),cloth,0,1.35,-.02);
 const armL=part(new THREE.CapsuleGeometry(.105,.48,4,7),cloth,-.36,1.22,0),armR=part(new THREE.CapsuleGeometry(.105,.48,4,7),cloth,.36,1.22,0),legL=part(new THREE.CapsuleGeometry(.13,.48,4,7),dark,-.17,.43,0),legR=part(new THREE.CapsuleGeometry(.13,.48,4,7),dark,.17,.43,0);player.position.set(0,0,8);
 const shadow=new THREE.Mesh(new THREE.CircleGeometry(.62,20),new THREE.MeshBasicMaterial({color:0x10140f,transparent:true,opacity:.38}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.025;player.add(shadow);
-const keys={};let jumpQueued=false;const virtualStick={x:0,y:0};let cameraYaw=0,cameraPitch=0,lookPointer=null,lastLookX=0,lastLookY=0;
+const keys={};let jumpQueued=false,runHeld=false,grabHeld=false;const virtualStick={x:0,y:0};
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(k===' '&&!e.repeat)jumpQueued=true});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 const stickBase=document.getElementById('stickBase'),stickKnob=document.getElementById('stickKnob');
@@ -101,11 +88,10 @@ function resetStick(){virtualStick.x=0;virtualStick.y=0;stickKnob.style.left='50
 stickBase.addEventListener('pointerdown',e=>{e.preventDefault();stickBase.setPointerCapture(e.pointerId);updateStick(e)});
 stickBase.addEventListener('pointermove',e=>{if(stickBase.hasPointerCapture(e.pointerId))updateStick(e)});
 ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>stickBase.addEventListener(ev,resetStick));
-const touchLook=document.getElementById('touchLook');
-touchLook.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;e.preventDefault();lookPointer=e.pointerId;lastLookX=e.clientX;lastLookY=e.clientY;touchLook.setPointerCapture(e.pointerId)});
-touchLook.addEventListener('pointermove',e=>{if(lookPointer!==e.pointerId)return;e.preventDefault();const dx=e.clientX-lastLookX,dy=e.clientY-lastLookY;lastLookX=e.clientX;lastLookY=e.clientY;cameraYaw-=dx*.006;cameraPitch=THREE.MathUtils.clamp(cameraPitch+dy*.003,-.12,.42)});
-function endLook(e){if(lookPointer===e.pointerId)lookPointer=null}
-['pointerup','pointercancel','lostpointercapture'].forEach(ev=>touchLook.addEventListener(ev,endLook));
+const runButton=document.getElementById('run'),grabButton=document.getElementById('grab');
+function bindHold(el,set){el.addEventListener('pointerdown',e=>{e.preventDefault();set(true);el.setPointerCapture(e.pointerId)});['pointerup','pointercancel','lostpointercapture'].forEach(ev=>el.addEventListener(ev,()=>set(false)))}
+bindHold(runButton,v=>runHeld=v);bindHold(grabButton,v=>grabHeld=v);
+addEventListener('keydown',e=>{if(e.key==='Shift')runHeld=true;if(e.key.toLowerCase()==='e')grabHeld=true});addEventListener('keyup',e=>{if(e.key==='Shift')runHeld=false;if(e.key.toLowerCase()==='e')grabHeld=false});
 const jumpButton=document.getElementById('jump');jumpButton.addEventListener('pointerdown',e=>{e.preventDefault();jumpQueued=true});
 let characterMixer=null,characterActions={},activeCharacterAction=null,realCharacterLoaded=false,avatarMoving=false;const assetLoader=new GLTFLoader();
 function enableModelShadows(root){root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.needsUpdate=true}}}})}
@@ -155,13 +141,11 @@ async function loadLocalCharacters(){
  console.info('Loaded playable avatar:',main.animations.map(a=>a.name));
  loading.remove();
  tick();
- // Start the world immediately; stream NPCs in one at a time after the player appears.
- loading.textContent='LOADING FOREST CHARACTERS…';
- loadForestNpcs().catch(err=>console.warn('NPC loading interrupted:',err));
-}let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();
+ // Level 01 is a solitary environmental journey; no combat NPCs are spawned.
+}let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-92,0,0);
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
 const elapsed=clock.elapsedTime;
-const targetRain=player.position.z<-24?Math.min(1,(Math.abs(player.position.z+24)/22)):0;
+const targetRain=player.position.x> -25?Math.min(1,Math.max(0,(player.position.x+25)/32)):0;
 worldState.rain=THREE.MathUtils.damp(worldState.rain,targetRain,player.position.z<-40?.22:.08,dt);
 worldState.wind=.28+worldState.rain*.8+.18*Math.sin(elapsed*.23);
 worldState.wetness=THREE.MathUtils.damp(worldState.wetness,worldState.rain, .12,dt);
@@ -172,16 +156,23 @@ for(let i=0;i<rainCount;i++){let x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i);y-=dt*(1
 rp.needsUpdate=true;
 for(const item of windLeaves){item.g.rotation.z=item.base+Math.sin(elapsed*1.8+item.phase)*worldState.wind*.12;item.g.rotation.x=Math.cos(elapsed*1.2+item.phase)*worldState.wind*.045}
 for(let i=0;i<waterPositions.count;i++){const x=waterPositions.getX(i),z=waterPositions.getZ(i);waterPositions.setY(i,Math.sin(elapsed*2.1+z*.22+x*.7)*.025+Math.sin(elapsed*1.2-z*.1)*.012)}waterPositions.needsUpdate=true;stream.geometry.computeVertexNormals();
-if(player.position.z<-22&&lastChapter<1){lastChapter=1;chapterEl.textContent=chapterNames[1];showStory('The wind is changing. The trees bend before the rain arrives.',5)}
-if(player.position.z<-43&&lastChapter<2){lastChapter=2;chapterEl.textContent=chapterNames[2];showStory('A fallen giant has changed the path. Follow the sound of water.',5)}
-if(player.position.z<-75&&lastChapter<3){lastChapter=3;chapterEl.textContent=chapterNames[3];showStory('A signal. Faint, but still alive.',5)}
+if(player.position.x> -45&&lastChapter<1){lastChapter=1;worldState.wind=1.1}
+if(player.position.x>5&&lastChapter<2){lastChapter=2;worldState.rain=.85}
+if(player.position.x>58&&lastChapter<3){lastChapter=3}
 const nearRadio=player.position.distanceTo(radio.position)<3.2;
-interactButton.style.display=nearRadio&&!worldState.radioFound?'block':'none';
-if(storyToast.style.opacity==='1'&&performance.now()>toastUntil)storyToast.style.opacity='0';
-const forward=THREE.MathUtils.clamp((keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-virtualStick.y,-1,1),side=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.hypot(forward,side)>.12,speed=5.2;if(moving){const len=Math.hypot(forward,side),f=forward/len,s=side/len,dx=s*Math.cos(cameraYaw)-f*Math.sin(cameraYaw),dz=-f*Math.cos(cameraYaw)-s*Math.sin(cameraYaw);const windPush=worldState.wind*.22*worldState.windDirection.x;player.position.x+=(dx*speed+windPush)*dt;player.position.z+=dz*speed*dt;player.rotation.y=Math.atan2(dx,dz);walk+=dt*9}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-78,78);player.position.z=THREE.MathUtils.clamp(player.position.z,-105,35);
+const nearCrate=Math.abs(player.position.x-crate.position.x)<1.75&&player.position.y<1.2;
+interactButton.style.display='none';
+if(grabHeld&&nearCrate&&!crateHeld){crateHeld=true}
+if(!grabHeld)crateHeld=false;
+if(crateHeld){crate.position.x=THREE.MathUtils.damp(crate.position.x,player.position.x+Math.sign(player.rotation.y)*1.15,12,dt);crateVelocity=0}
+else{crateVelocity*=Math.exp(-3.8*dt);crate.position.x+=crateVelocity*dt}
+crate.position.y=THREE.MathUtils.damp(crate.position.y,.58,12,dt);
+
+const horizontal=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.abs(horizontal)>.12,speed=runHeld?8.4:4.8;if(moving){const windPush=worldState.wind*.18*worldState.windDirection.x;player.position.x+=(horizontal*speed+windPush)*dt;player.rotation.y=horizontal>0?Math.PI/2:-Math.PI/2;walk+=dt*(runHeld?14:9)}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-102,92);player.position.z=0;
+if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateHeld&&nearCrate&&horizontal>0)crateVelocity=horizontal*(runHeld?3.4:1.8);
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
-const camDistance=13.5,camHeight=5.2+cameraPitch*7;desiredCam.set(player.position.x+Math.sin(cameraYaw)*camDistance,player.position.y+camHeight,player.position.z+Math.cos(cameraYaw)*camDistance);camera.position.lerp(desiredCam,1-Math.exp(-3.2*dt));lookAt.set(player.position.x,player.position.y+.95+cameraPitch*2,player.position.z);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
+desiredCam.set(player.position.x,player.position.y+3.1,player.position.z+17);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.05,player.position.z);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.15));renderer.setSize(innerWidth,innerHeight)});
 loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);loading.textContent='PLAYER MODEL FAILED TO LOAD';setTimeout(()=>{loading.remove();tick()},1800)});
 </script></body></html>
