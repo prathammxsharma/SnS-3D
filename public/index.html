@@ -46,6 +46,47 @@ for(let i=0;i<90;i++){
 treeTrunks.count=trunkCount;treeCrowns.forEach((m,i)=>{m.count=treeCounts[i];m.instanceMatrix.needsUpdate=true;scene.add(m)});treeTrunks.instanceMatrix.needsUpdate=true;scene.add(treeTrunks);
 const rockGeo=new THREE.DodecahedronGeometry(1,0),rockMat=mat(0x626657),proceduralRocks=[];for(let i=0;i<32;i++){const r=new THREE.Mesh(rockGeo,rockMat);const a=rand()*Math.PI*2,rad=5+rand()*48;r.position.set(Math.cos(a)*rad,.15+rand()*.35,12-rand()*150);r.scale.set(.25+rand()*.8,.2+rand()*.5,.3+rand());r.rotation.set(rand(),rand()*3,rand());r.castShadow=true;r.receiveShadow=true;scene.add(r);proceduralRocks.push(r)}
 const fernMat=mat(0x536b45),proceduralFerns=[];for(let i=0;i<48;i++){const x=(rand()<.5?-1:1)*(4+rand()*18),z=18-rand()*150,group=new THREE.Group();group.position.set(x,0,z);for(let j=0;j<5;j++){const leaf=new THREE.Mesh(new THREE.ConeGeometry(.13,1.25,5),fernMat);leaf.position.set((rand()-.5)*.6,.48,(rand()-.5)*.6);leaf.rotation.z=(rand()-.5)*1.4;leaf.rotation.x=(rand()-.5)*.8;group.add(leaf)}scene.add(group);proceduralFerns.push(group)}
+/* THE QUIET FOREST: Level 01 environmental simulation */
+const worldState={wind:0.35,windDirection:new THREE.Vector3(1,0,.25).normalize(),rain:0,wetness:0,temperature:18,chapter:0,radioFound:false};
+const chapterNames=['THE AWAKENING','THE FIRST STORM','THE FALLEN GIANT','THE LAST SIGNAL'];
+const chapterCopy=[
+ 'A quiet forest. Your footsteps are the only thing that answers.',
+ 'The wind is changing. Find shelter among the trees.',
+ 'The storm has changed the path. Follow the water downhill.',
+ 'An abandoned research station. Something is still transmitting.'
+];
+const chapterEl=document.querySelector('.chapter strong');
+const statusEl=document.querySelector('.status');
+const storyToast=document.createElement('div');
+storyToast.style.cssText='position:fixed;left:50%;top:19%;transform:translateX(-50%);max-width:min(88vw,520px);padding:13px 18px;background:#101915b8;border:1px solid #e5dec355;color:#eee8d8;text-align:center;font:italic 16px Georgia,serif;letter-spacing:.025em;opacity:0;transition:opacity 1.2s;pointer-events:none;backdrop-filter:blur(8px);z-index:2';
+document.body.appendChild(storyToast);
+let toastUntil=0,lastChapter=-1;
+function showStory(text,duration=4.5){storyToast.textContent=text;storyToast.style.opacity='1';toastUntil=performance.now()+duration*1000}
+const windLeaves=proceduralFerns.map((g,i)=>({g,phase:rand()*6.28,base:g.rotation.z}));
+const rainCount=650,rainPositions=new Float32Array(rainCount*3),rainGeo=new THREE.BufferGeometry();
+for(let i=0;i<rainCount;i++){rainPositions[i*3]=(rand()-.5)*34;rainPositions[i*3+1]=rand()*18;rainPositions[i*3+2]=(rand()-.5)*42}
+rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
+const rainMat=new THREE.PointsMaterial({color:0xc5d8d6,size:.075,transparent:true,opacity:0,depthWrite:false});
+const rainField=new THREE.Points(rainGeo,rainMat);rainField.frustumCulled=false;scene.add(rainField);
+const waterMat=new THREE.MeshStandardMaterial({color:0x344f50,roughness:.22,metalness:.12,transparent:true,opacity:.82});
+const stream=new THREE.Mesh(new THREE.PlaneGeometry(3.8,95,1,48),waterMat);stream.rotation.x=-Math.PI/2;stream.position.set(-6.5,-.015,-38);scene.add(stream);
+const waterPositions=stream.geometry.attributes.position;
+const station=new THREE.Group();const concrete=mat(0x686b5d),metal=mat(0x343e3a,.55),warm= new THREE.MeshStandardMaterial({color:0xe5b76a,emissive:0x8d5420,emissiveIntensity:1.4});
+function block(parent,geo,m,x,y,z){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.castShadow=true;o.receiveShadow=true;parent.add(o);return o}
+block(station,new THREE.BoxGeometry(9,4.8,6),concrete,0,2.4,0);
+block(station,new THREE.BoxGeometry(3.2,2.6,.18),metal,0,1.35,3.08);
+block(station,new THREE.BoxGeometry(1.2,.18,.18),warm,0,2.35,3.2);
+block(station,new THREE.BoxGeometry(2.1,.16,.16),metal,0,4.95,0);
+station.position.set(0,0,-91);scene.add(station);
+const radio=new THREE.Group();block(radio,new THREE.BoxGeometry(.55,.22,.34),metal,0,0,0);block(radio,new THREE.BoxGeometry(.08,.5,.08),warm,.18,.32,-.02);radio.position.set(0,1.1,-87.65);scene.add(radio);
+const interactButton=document.createElement('button');
+interactButton.textContent='E  ·  EXAMINE';interactButton.style.cssText='display:none;position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 205px);transform:translateX(-50%);padding:12px 20px;border:1px solid #e5dec388;background:#101915dd;color:#eee8d8;letter-spacing:.12em;z-index:4;touch-action:manipulation';
+document.body.appendChild(interactButton);
+function examineRadio(){if(worldState.radioFound)return;worldState.radioFound=true;showStory('“The forest is not dying. It is responding.”',8);chapterEl.textContent='THE LAST SIGNAL';statusEl.textContent='SIGNAL FOUND · THE FOREST REMEMBERS';interactButton.style.display='none'}
+interactButton.addEventListener('click',examineRadio);
+addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'&&interactButton.style.display!=='none')examineRadio()});
+showStory('A quiet forest. Your footsteps are the only thing that answers.',5);
+
 const player=new THREE.Group();scene.add(player);const suit=mat(0x303b36,.72),cloth=mat(0x59604e),skin=mat(0xc6a98a),dark=mat(0x202722);
 function part(geo,m,x,y,z,sx=1,sy=1,sz=1){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;player.add(o);return o}
 part(new THREE.CapsuleGeometry(.34,.72,5,8),suit,0,1.05,0,.8,1,.55);part(new THREE.SphereGeometry(.25,12,10),skin,0,1.83,0,.88,1,.85);part(new THREE.BoxGeometry(.54,.35,.34),cloth,0,1.35,-.02);
@@ -118,7 +159,26 @@ async function loadLocalCharacters(){
  loading.textContent='LOADING FOREST CHARACTERS…';
  loadForestNpcs().catch(err=>console.warn('NPC loading interrupted:',err));
 }let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();
-function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);const forward=THREE.MathUtils.clamp((keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-virtualStick.y,-1,1),side=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.hypot(forward,side)>.12,speed=5.2;if(moving){const len=Math.hypot(forward,side),f=forward/len,s=side/len,dx=s*Math.cos(cameraYaw)-f*Math.sin(cameraYaw),dz=-f*Math.cos(cameraYaw)-s*Math.sin(cameraYaw);player.position.x+=dx*speed*dt;player.position.z+=dz*speed*dt;player.rotation.y=Math.atan2(dx,dz);walk+=dt*9}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-78,78);player.position.z=THREE.MathUtils.clamp(player.position.z,-105,35);
+function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
+const elapsed=clock.elapsedTime;
+const targetRain=player.position.z<-24?Math.min(1,(Math.abs(player.position.z+24)/22)):0;
+worldState.rain=THREE.MathUtils.damp(worldState.rain,targetRain,player.position.z<-40?.22:.08,dt);
+worldState.wind=.28+worldState.rain*.8+.18*Math.sin(elapsed*.23);
+worldState.wetness=THREE.MathUtils.damp(worldState.wetness,worldState.rain, .12,dt);
+rainMat.opacity=worldState.rain*.62;
+rainField.position.copy(player.position);rainField.position.y+=4;
+const rp=rainGeo.attributes.position;
+for(let i=0;i<rainCount;i++){let x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i);y-=dt*(13+worldState.rain*7);x+=worldState.wind*worldState.windDirection.x*dt*2.2;z+=worldState.wind*worldState.windDirection.z*dt*2.2;if(y<0){y=16+rand()*3;x=(rand()-.5)*34;z=(rand()-.5)*42}rp.setXYZ(i,x,y,z)}
+rp.needsUpdate=true;
+for(const item of windLeaves){item.g.rotation.z=item.base+Math.sin(elapsed*1.8+item.phase)*worldState.wind*.12;item.g.rotation.x=Math.cos(elapsed*1.2+item.phase)*worldState.wind*.045}
+for(let i=0;i<waterPositions.count;i++){const x=waterPositions.getX(i),z=waterPositions.getZ(i);waterPositions.setY(i,Math.sin(elapsed*2.1+z*.22+x*.7)*.025+Math.sin(elapsed*1.2-z*.1)*.012)}waterPositions.needsUpdate=true;stream.geometry.computeVertexNormals();
+if(player.position.z<-22&&lastChapter<1){lastChapter=1;chapterEl.textContent=chapterNames[1];showStory('The wind is changing. The trees bend before the rain arrives.',5)}
+if(player.position.z<-43&&lastChapter<2){lastChapter=2;chapterEl.textContent=chapterNames[2];showStory('A fallen giant has changed the path. Follow the sound of water.',5)}
+if(player.position.z<-75&&lastChapter<3){lastChapter=3;chapterEl.textContent=chapterNames[3];showStory('A signal. Faint, but still alive.',5)}
+const nearRadio=player.position.distanceTo(radio.position)<3.2;
+interactButton.style.display=nearRadio&&!worldState.radioFound?'block':'none';
+if(storyToast.style.opacity==='1'&&performance.now()>toastUntil)storyToast.style.opacity='0';
+const forward=THREE.MathUtils.clamp((keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-virtualStick.y,-1,1),side=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.hypot(forward,side)>.12,speed=5.2;if(moving){const len=Math.hypot(forward,side),f=forward/len,s=side/len,dx=s*Math.cos(cameraYaw)-f*Math.sin(cameraYaw),dz=-f*Math.cos(cameraYaw)-s*Math.sin(cameraYaw);const windPush=worldState.wind*.22*worldState.windDirection.x;player.position.x+=(dx*speed+windPush)*dt;player.position.z+=dz*speed*dt;player.rotation.y=Math.atan2(dx,dz);walk+=dt*9}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-78,78);player.position.z=THREE.MathUtils.clamp(player.position.z,-105,35);
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
 const camDistance=13.5,camHeight=5.2+cameraPitch*7;desiredCam.set(player.position.x+Math.sin(cameraYaw)*camDistance,player.position.y+camHeight,player.position.z+Math.cos(cameraYaw)*camDistance);camera.position.lerp(desiredCam,1-Math.exp(-3.2*dt));lookAt.set(player.position.x,player.position.y+.95+cameraPitch*2,player.position.z);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
