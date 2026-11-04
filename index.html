@@ -253,7 +253,8 @@ function updateRound(dt,elapsed){
  if(teammate){const nearest=seekers.reduce((best,b)=>Math.hypot(b.group.position.x-teammate.position.x,b.group.position.z-teammate.position.z)<Math.hypot(best.group.position.x-teammate.position.x,best.group.position.z-teammate.position.z)?b:best,seekers[0]);const dx=teammate.position.x-nearest.group.position.x,dz=teammate.position.z-nearest.group.position.z,d=Math.hypot(dx,dz)||1;teammate.position.x+=dx/d*1.65*dt;teammate.position.z=THREE.MathUtils.clamp(teammate.position.z+dz/d*1.65*dt,-5.5,5.5);if(Math.hypot(teammate.position.x-nearest.group.position.x,teammate.position.z-nearest.group.position.z)<1.1)teammate.visible=false;}
  if(roundRemaining<=0)finishRound(true);
 }
-\nlet vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-105,0,0);
+
+let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-105,0,0);
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
 const elapsed=clock.elapsedTime;
 const cycle=(elapsed/600+.5)%1,solar=Math.sin(cycle*Math.PI*2-Math.PI/2),day=THREE.MathUtils.smoothstep(solar,-.18,.28),night=1-day;
