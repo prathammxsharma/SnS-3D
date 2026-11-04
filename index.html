@@ -241,35 +241,25 @@ crate.position.y=THREE.MathUtils.damp(crate.position.y,.58,12,dt);
 
 const horizontal=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.abs(horizontal)>.12,speed=runHeld?8.4:4.8;if(moving){const windPush=worldState.wind*.18*worldState.windDirection.x;player.position.x+=(horizontal*speed+windPush)*dt;player.rotation.y=horizontal>0?Math.PI/2:-Math.PI/2;walk+=dt*(runHeld?14:9)}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-120,124);player.position.z=0;
 if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateHeld&&nearCrate&&horizontal>0)crateVelocity=horizontal*(runHeld?3.4:1.8);
-if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
+if(jumpQueued&&onGround){vy=5.25;onGround=false}jumpQueued=false;vy-=22*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;
 if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}
 else{
- if(grabHeld&&!previousGrabHeld)transientActionUntil=elapsed+.62;
+ if(grabHeld&&!previousGrabHeld)transientActionUntil=elapsed+.42;
  previousGrabHeld=grabHeld;
  const actionKeys=Object.keys(characterActions);
- const jumpKey=actionKeys.find(k=>k.includes('jump')||k.includes('leap'));
- const grabKey=actionKeys.find(k=>k.includes('grab')||k.includes('interact')||k.includes('pick'));
  const runKey=actionKeys.find(k=>k.includes('run'));
  const walkKey=actionKeys.find(k=>k.includes('walk'));
  const idleKey=actionKeys.find(k=>k.includes('idle'));
- const transient= !onGround&&jumpKey?jumpKey:elapsed<transientActionUntil&&grabKey?grabKey:null;
- const wanted=transient|| (moving?(runHeld&&runKey?runKey:walkKey||runKey):idleKey);
+ // Keep locomotion clips only. Jump height and landing are controlled by world physics,
+ // never by a looping animation that can translate the rig upward.
+ const wanted=moving?(runHeld&&runKey?runKey:walkKey||runKey):idleKey;
  if(wanted&&characterActions[wanted]!==activeCharacterAction){
-  const next=characterActions[wanted];next.reset();next.enabled=true;next.paused=false;next.setEffectiveTimeScale(1);next.setEffectiveWeight(1);next.fadeIn(.16).play();
-  if(activeCharacterAction)activeCharacterAction.fadeOut(.16);
+  const next=characterActions[wanted];next.reset();next.enabled=true;next.paused=false;next.setEffectiveTimeScale(1);next.setEffectiveWeight(1);next.fadeIn(.18).play();
+  if(activeCharacterAction)activeCharacterAction.fadeOut(.18);
   activeCharacterAction=next;
  }
- if(activeCharacterAction){activeCharacterAction.paused=false;if(!transient&&!moving&&idleKey)activeCharacterAction.paused=false}
  if(characterMixer)characterMixer.update(dt);
- const poseBlend=THREE.MathUtils.damp(0,(!onGround?.72:elapsed<transientActionUntil?.9:0),8,dt);
- for(const bone of playerBones){
-  const n=bone.name.toLowerCase(),base=baseBonePose.get(bone);if(!base)continue;
-  let rx=base.rotation.x,ry=base.rotation.y,rz=base.rotation.z;
-  if(!onGround){if(/upperarm|arm|shoulder/.test(n)){rz+=(/left|l_/.test(n)?-.62:.62);rx-=.18}if(/thigh|upleg/.test(n))rx-=.28;if(/spine|chest/.test(n))rx-=.12}
-  else if(elapsed<transientActionUntil){if(/upperarm|arm|shoulder/.test(n)){rx-=.78;if(/left|l_/.test(n))rz-=.18;else rz+=.18}if(/spine|chest/.test(n))rx-=.22}
-  bone.rotation.set(rx,ry,rz);
- }
  if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)
 }
 const device=document.body.dataset.device||'desktop';const followDistance=device==='desktop'?14:device==='tablet'?18:24;const followHeight=device==='desktop'?4.1:device==='tablet'?4.7:5.2;desiredCam.set(player.position.x,player.position.y+followHeight,player.position.z+followDistance);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.15,player.position.z-4);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
