@@ -4,19 +4,53 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#101915"><title>Forest Explorer | 3D Field Test</title>
 <style>
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101915;color:#eee8d8;font-family:system-ui,-apple-system,Segoe UI,sans-serif}#scene{position:fixed;inset:0}canvas{display:block;width:100%;height:100%;touch-action:none}.hud{position:fixed;inset:0;pointer-events:none}.brand{position:absolute;top:calc(env(safe-area-inset-top) + 18px);left:22px;font-size:11px;font-weight:700;letter-spacing:.32em;color:#e7e0ccbb}.chapter{position:absolute;right:22px;top:calc(env(safe-area-inset-top) + 16px);text-align:right;font-size:9px;letter-spacing:.22em;color:#e7e0cc88}.chapter strong{display:block;margin-top:4px;font:italic 22px Georgia,serif;letter-spacing:.02em;color:#eee7d5}.status{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);padding:10px 15px;border:1px solid #e5dec33d;background:#101915a8;backdrop-filter:blur(10px);font-size:11px;letter-spacing:.06em;white-space:nowrap;color:#e9e3d4}.touch-look{display:none}.run,.grab{position:absolute;right:28px;width:64px;height:64px;border:1px solid #e5dec388;border-radius:50%;background:#101915aa;color:#f1ead8;font-size:24px;pointer-events:auto;touch-action:none;backdrop-filter:blur(8px)}.run{bottom:calc(env(safe-area-inset-bottom) + 126px)}.grab{bottom:calc(env(safe-area-inset-bottom) + 210px);font-size:20px}.mobile-controls{display:none;position:absolute;inset:0;pointer-events:none}.stick-base{position:absolute;left:24px;bottom:calc(env(safe-area-inset-bottom) + 26px);width:124px;height:124px;border:1px solid #e5dec388;border-radius:50%;background:#10191566;backdrop-filter:blur(6px);pointer-events:auto;touch-action:none}.stick-knob{position:absolute;left:50%;top:50%;width:52px;height:52px;transform:translate(-50%,-50%);border:1px solid #f1ead8aa;border-radius:50%;background:#d8d0b755;box-shadow:0 2px 12px #0005;pointer-events:none}.jump{position:absolute;right:28px;bottom:calc(env(safe-area-inset-bottom) + 42px);width:72px;height:72px;border:1px solid #e5dec388;border-radius:50%;background:#101915aa;color:#f1ead8;font-size:24px;pointer-events:auto;touch-action:none;backdrop-filter:blur(8px)}@media(max-width:700px){.mobile-controls{display:block}}#loading{position:fixed;inset:0;display:grid;place-items:center;background:#101915;color:#e8e0ca;letter-spacing:.22em;font-size:11px;z-index:3;text-align:center;padding:24px}
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101915;color:#eee8d8;font-family:system-ui,-apple-system,Segoe UI,sans-serif;overscroll-behavior:none}
+#scene{position:fixed;inset:0}
+canvas{display:block;width:100%;height:100%;touch-action:none}
+.hud{position:fixed;inset:0;pointer-events:none}
+.mobile-controls{display:none;position:absolute;inset:0;pointer-events:none}
+.stick-base{position:absolute;left:max(22px,env(safe-area-inset-left));bottom:calc(env(safe-area-inset-bottom) + 22px);width:clamp(116px,16vw,150px);height:clamp(116px,16vw,150px);border:1px solid #e5dec388;border-radius:50%;background:#10191566;backdrop-filter:blur(6px);pointer-events:auto;touch-action:none}
+.stick-knob{position:absolute;left:50%;top:50%;width:42%;height:42%;transform:translate(-50%,-50%);border:1px solid #f1ead8aa;border-radius:50%;background:#d8d0b755;box-shadow:0 2px 12px #0005;pointer-events:none}
+.jump,.run,.grab{position:absolute;right:max(22px,env(safe-area-inset-right));width:clamp(58px,8vw,72px);height:clamp(58px,8vw,72px);border:1px solid #e5dec388;border-radius:50%;background:#101915b8;color:#f1ead8;pointer-events:auto;touch-action:none;backdrop-filter:blur(8px);display:grid;place-items:center;font-size:23px}
+.jump{bottom:calc(env(safe-area-inset-bottom) + 24px)}
+.run{bottom:calc(env(safe-area-inset-bottom) + 104px);font-size:26px}
+.grab{bottom:calc(env(safe-area-inset-bottom) + 184px);font-size:20px}
+.desktop-controls{position:absolute;right:max(20px,env(safe-area-inset-right));bottom:22px;padding:10px 14px;border:1px solid #e5dec344;background:#10191599;color:#eee8d5;font-size:11px;line-height:1.8;letter-spacing:.04em;backdrop-filter:blur(8px);text-align:right}
+.desktop-controls kbd{display:inline-block;min-width:22px;padding:1px 5px;margin-left:3px;border:1px solid #e5dec366;border-radius:4px;background:#ffffff12;font:inherit;text-align:center}
+#loading{position:fixed;inset:0;display:grid;place-items:center;background:#101915;color:#e8e0ca;letter-spacing:.22em;font-size:11px;z-index:3;text-align:center;padding:24px}
+body[data-device="desktop"] .desktop-controls{display:block}
+body[data-device="desktop"] .mobile-controls{display:none}
+body[data-device="mobile"] .mobile-controls,body[data-device="tablet"] .mobile-controls{display:block}
+body[data-device="mobile"] .desktop-controls,body[data-device="tablet"] .desktop-controls{display:none}
+body[data-device="tablet"] .stick-base{width:clamp(138px,17vw,176px);height:clamp(138px,17vw,176px);left:30px;bottom:calc(env(safe-area-inset-bottom) + 28px)}
+body[data-device="tablet"] .jump,body[data-device="tablet"] .run,body[data-device="tablet"] .grab{width:76px;height:76px;right:30px}
+body[data-device="tablet"] .jump{bottom:calc(env(safe-area-inset-bottom) + 28px)}
+body[data-device="tablet"] .run{bottom:calc(env(safe-area-inset-bottom) + 120px)}
+body[data-device="tablet"] .grab{bottom:calc(env(safe-area-inset-bottom) + 212px)}
+@media(max-height:500px) and (pointer:coarse){
+ .stick-base{width:104px;height:104px;left:14px;bottom:12px}
+ .jump,.run,.grab{width:54px;height:54px;right:14px}
+ .jump{bottom:12px}.run{bottom:74px}.grab{bottom:136px}
+ body[data-device="tablet"] .stick-base{width:118px;height:118px;left:18px;bottom:14px}
+ body[data-device="tablet"] .jump,body[data-device="tablet"] .run,body[data-device="tablet"] .grab{width:60px;height:60px;right:18px}
+ body[data-device="tablet"] .jump{bottom:14px}body[data-device="tablet"] .run{bottom:82px}body[data-device="tablet"] .grab{bottom:150px}
+}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
 <body><div id="loading">PREPARING THE FOREST…</div><div id="scene"></div>
-<div class="hud"><div class="mobile-controls"><div id="stickBase" class="stick-base" aria-label="Move left and right"><div id="stickKnob" class="stick-knob"></div></div><button id="jump" class="jump" aria-label="Jump">↑</button><button id="run" class="run" aria-label="Run">»</button><button id="grab" class="grab" aria-label="Grab or interact">✋</button></div></div>
+<div class="hud"><div class="desktop-controls"><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> Move<br><kbd>SHIFT</kbd> Run · <kbd>SPACE</kbd> Jump<br><kbd>E</kbd> Grab / Interact</div><div class="mobile-controls"><div id="stickBase" class="stick-base" aria-label="Move left and right"><div id="stickKnob" class="stick-knob"></div></div><button id="jump" class="jump" aria-label="Jump">↑</button><button id="run" class="run" aria-label="Run">»</button><button id="grab" class="grab" aria-label="Grab or interact">✋</button></div></div>
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const host=document.querySelector('#scene'),loading=document.querySelector('#loading');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x7f9080);scene.fog=new THREE.FogExp2(0x7f9080,.014);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,300);
-const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?.85:1.15));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;host.appendChild(renderer.domElement);
+function getDeviceClass(){const coarse=matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>0;if(!coarse)return 'desktop';return Math.min(innerWidth,innerHeight)<700?'mobile':'tablet'}
+function applyDeviceLayout(){const device=getDeviceClass();document.body.dataset.device=device;const dpr=device==='mobile'?Math.min(devicePixelRatio,1):device==='tablet'?Math.min(devicePixelRatio,1.2):Math.min(devicePixelRatio,1.6);renderer.setPixelRatio(dpr);renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=device==='mobile'?64:device==='tablet'?62:58;camera.updateProjectionMatrix()}
+document.body.dataset.device=getDeviceClass();
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.2));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;host.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xc5d2c4,0x263128,1.25));
 const sun=new THREE.DirectionalLight(0xffe5bd,1.9);sun.position.set(-35,55,24);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
 const fill=new THREE.DirectionalLight(0xa9c7cb,1);fill.position.set(30,18,-35);scene.add(fill);
@@ -202,6 +236,6 @@ if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateH
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
 desiredCam.set(player.position.x,player.position.y+5.2,player.position.z+24);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.05,player.position.z-5);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?.85:1.15));renderer.setSize(innerWidth,innerHeight)});
+addEventListener('resize',applyDeviceLayout);addEventListener('orientationchange',()=>setTimeout(applyDeviceLayout,120));
 loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);});
 </script></body></html>
