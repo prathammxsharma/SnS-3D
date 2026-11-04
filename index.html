@@ -133,7 +133,7 @@ const player=new THREE.Group();scene.add(player);const suit=mat(0x303b36,.72),cl
 function part(geo,m,x,y,z,sx=1,sy=1,sz=1){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;player.add(o);return o}
 part(new THREE.CapsuleGeometry(.34,.72,5,8),suit,0,1.05,0,.8,1,.55);part(new THREE.SphereGeometry(.25,12,10),skin,0,1.83,0,.88,1,.85);part(new THREE.BoxGeometry(.54,.35,.34),cloth,0,1.35,-.02);
 const armL=part(new THREE.CapsuleGeometry(.105,.48,4,7),cloth,-.36,1.22,0),armR=part(new THREE.CapsuleGeometry(.105,.48,4,7),cloth,.36,1.22,0),legL=part(new THREE.CapsuleGeometry(.13,.48,4,7),dark,-.17,.43,0),legR=part(new THREE.CapsuleGeometry(.13,.48,4,7),dark,.17,.43,0);player.position.set(0,0,8);
-const shadow=new THREE.Mesh(new THREE.CircleGeometry(.62,20),new THREE.MeshBasicMaterial({color:0x10140f,transparent:true,opacity:.38}));shadow.rotation.x=-Math.PI/2;shadow.position.y=.025;player.add(shadow);
+const shadow=new THREE.Mesh(new THREE.CircleGeometry(.58,24),new THREE.MeshBasicMaterial({color:0x080d09,transparent:true,opacity:.34,depthWrite:false}));shadow.rotation.x=-Math.PI/2;shadow.position.set(player.position.x,.035,player.position.z);shadow.renderOrder=2;scene.add(shadow);
 const keys={};let jumpQueued=false,runHeld=false,grabHeld=false;const virtualStick={x:0,y:0};
 addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(k===' '&&!e.repeat)jumpQueued=true});
 addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
@@ -187,7 +187,7 @@ async function loadForestNpcs(){
  }
 }
 async function loadLocalCharacters(){
- player.children.forEach(o=>{if(o!==shadow)o.visible=false});
+ player.children.forEach(o=>{o.visible=false});
  loading.textContent='LOADING CHARACTER…';
  const main=await assetLoader.loadAsync('/models/man-rigged.glb',event=>{
   if(event.total>0)loading.textContent='LOADING CHARACTER  '+Math.round(event.loaded/event.total*100)+'%';
@@ -241,7 +241,7 @@ crate.position.y=THREE.MathUtils.damp(crate.position.y,.58,12,dt);
 
 const horizontal=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.abs(horizontal)>.12,speed=runHeld?8.4:4.8;if(moving){const windPush=worldState.wind*.18*worldState.windDirection.x;player.position.x+=(horizontal*speed+windPush)*dt;player.rotation.y=horizontal>0?Math.PI/2:-Math.PI/2;walk+=dt*(runHeld?14:9)}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-120,124);player.position.z=0;
 if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateHeld&&nearCrate&&horizontal>0)crateVelocity=horizontal*(runHeld?3.4:1.8);
-if(jumpQueued&&onGround){vy=5.25;onGround=false}jumpQueued=false;vy-=22*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
+if(jumpQueued&&onGround){vy=5.25;onGround=false}jumpQueued=false;vy-=22*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}shadow.position.set(player.position.x,.035,player.position.z);const shadowScale=1+Math.min(player.position.y*.22,.42);shadow.scale.set(shadowScale,shadowScale,shadowScale);shadow.material.opacity=.34/(1+player.position.y*.8);
 const swing=moving&&onGround?Math.sin(walk)*.48:0;
 if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}
 else{
