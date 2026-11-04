@@ -73,6 +73,7 @@ interactButton.addEventListener('click',examineRadio);
 addEventListener('keydown',e=>{if(e.key.toLowerCase()==='e'&&interactButton.style.display!=='none')examineRadio()});
 
 
+const crateMat=mat(0x65503a),crate=new THREE.Mesh(new THREE.BoxGeometry(1.15,1.15,1.15),crateMat);crate.position.set(-22,.58,0);crate.castShadow=true;crate.receiveShadow=true;scene.add(crate);let crateVelocity=0,crateHeld=false;
 const player=new THREE.Group();scene.add(player);const suit=mat(0x303b36,.72),cloth=mat(0x59604e),skin=mat(0xc6a98a),dark=mat(0x202722);
 function part(geo,m,x,y,z,sx=1,sy=1,sz=1){const o=new THREE.Mesh(geo,m);o.position.set(x,y,z);o.scale.set(sx,sy,sz);o.castShadow=true;o.receiveShadow=true;player.add(o);return o}
 part(new THREE.CapsuleGeometry(.34,.72,5,8),suit,0,1.05,0,.8,1,.55);part(new THREE.SphereGeometry(.25,12,10),skin,0,1.83,0,.88,1,.85);part(new THREE.BoxGeometry(.54,.35,.34),cloth,0,1.35,-.02);
@@ -161,10 +162,16 @@ if(player.position.x> -45&&lastChapter<1){lastChapter=1;worldState.wind=1.1}
 if(player.position.x>5&&lastChapter<2){lastChapter=2;worldState.rain=.85}
 if(player.position.x>58&&lastChapter<3){lastChapter=3}
 const nearRadio=player.position.distanceTo(radio.position)<3.2;
-interactButton.style.display=nearRadio&&!worldState.radioFound?'block':'none';
+const nearCrate=Math.abs(player.position.x-crate.position.x)<1.75&&player.position.y<1.2;
+interactButton.style.display=(nearRadio&&!worldState.radioFound)||nearCrate?'block':'none';
+if(grabHeld&&nearCrate&&!crateHeld){crateHeld=true}
+if(!grabHeld)crateHeld=false;
+if(crateHeld){crate.position.x=THREE.MathUtils.damp(crate.position.x,player.position.x+Math.sign(player.rotation.y)*1.15,12,dt);crateVelocity=0}
+else{crateVelocity*=Math.exp(-3.8*dt);crate.position.x+=crateVelocity*dt}
+crate.position.y=THREE.MathUtils.damp(crate.position.y,.58,12,dt);
 
 const horizontal=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.abs(horizontal)>.12,speed=runHeld?8.4:4.8;if(moving){const windPush=worldState.wind*.18*worldState.windDirection.x;player.position.x+=(horizontal*speed+windPush)*dt;player.rotation.y=horizontal>0?Math.PI/2:-Math.PI/2;walk+=dt*(runHeld?14:9)}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-102,92);player.position.z=0;
-if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();
+if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateHeld&&nearCrate&&horizontal>0)crateVelocity=horizontal*(runHeld?3.4:1.8);
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
 desiredCam.set(player.position.x,player.position.y+3.1,player.position.z+17);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.05,player.position.z);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
