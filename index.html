@@ -51,6 +51,7 @@ body[data-device="mobile"] .game-hud{font-size:10px;gap:8px;padding:8px 10px;top
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+import {clone as cloneSkeleton} from 'three/addons/utils/SkeletonUtils.js';
 const host=document.querySelector('#scene'),loading=document.querySelector('#loading');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x7f9080);scene.fog=new THREE.FogExp2(0x7f9080,.014);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,300);
@@ -166,13 +167,38 @@ function fitCharacter(root,targetHeight=1.55){
  root.position.x-=center.x;root.position.z-=center.z;root.position.y-=fitted.min.y;
  enableModelShadows(root);return root;
 }
-function addCharacterAnimations(gltf){
+function addCharacterAnimations(gltf,initial='idle'){
  const mixer=new THREE.AnimationMixer(gltf.scene),actions={};
- for(const clip of gltf.animations||[]){const key=clip.name.toLowerCase();actions[key]=mixer.clipAction(clip)}
- const keys=Object.keys(actions),preferred=keys.find(k=>k.includes('walk'))||keys.find(k=>k.includes('run'))||keys[0];
+ for(const clip of gltf.animations||[]){const key=clip.name.toLowerCase();const action=mixer.clipAction(clip);action.setLoop(THREE.LoopRepeat,Infinity);action.clampWhenFinished=false;actions[key]=action}
+ const keys=Object.keys(actions);
+ const preferred=(initial==='idle'?keys.find(k=>k.includes('idle')):null)||keys.find(k=>k.includes('walk'))||keys.find(k=>k.includes('run'))||keys[0];
  const active=preferred?actions[preferred]:null;
- if(active){active.reset();active.enabled=true;active.paused=false;active.play()}
+ if(active){active.reset();active.enabled=true;active.paused=false;active.setEffectiveTimeScale(1);active.setEffectiveWeight(1);active.play()}
  return {mixer,actions,active};
+}
+const opponentTemplates=[];
+async function preloadOpponentCharacters(){
+ const files=['police-officer-rigged.glb','cyborg-rigged.glb','ninja-rigged.glb','soldier-rigged.glb'];
+ const loaded=await Promise.all(files.map(async file=>({file,gltf:await assetLoader.loadAsync('/models/'+file)})));
+ opponentTemplates.splice(0,opponentTemplates.length,...loaded);
+ console.info('Opponent character models ready:',loaded.map(x=>x.file));
+}
+function createAnimatedOpponent(template,x,z){
+ const root=cloneSkeleton(template.gltf.scene);
+ fitCharacter(root,1.65);
+ const wrapper=new THREE.Group();wrapper.add(root);wrapper.position.set(x,0,z);scene.add(wrapper);
+ const animation=addCharacterAnimations(template.gltf,'walk');
+ return {group:wrapper,mixer:animation.mixer,actions:animation.actions,active:animation.active,speed:2.15,stun:0};
+}
+function setOpponentLocomotion(bot,moving){
+ const keys=Object.keys(bot.actions);
+ const wanted=moving?(keys.find(k=>k.includes('run'))||keys.find(k=>k.includes('walk'))):(keys.find(k=>k.includes('idle'))||keys.find(k=>k.includes('walk'))||keys.find(k=>k.includes('run')));
+ if(wanted&&bot.actions[wanted]!==bot.active){
+  const next=bot.actions[wanted];next.reset();next.enabled=true;next.paused=false;next.setEffectiveTimeScale(1);next.setEffectiveWeight(1);next.fadeIn(.18).play();
+  if(bot.active)bot.active.fadeOut(.18);
+  bot.active=next;
+ }
+ if(bot.mixer)bot.mixer.update(0);
 }
 async function loadForestNpcs(){
  const npcSpecs=[
@@ -195,7 +221,7 @@ async function loadForestNpcs(){
 }
 async function loadLocalCharacters(){
  player.children.forEach(o=>{o.visible=false});
- loading.textContent='LOADING CHARACTER…';
+ loading.textContent='LOADING CHARACTERS…';
  const main=await assetLoader.loadAsync('/models/man-rigged.glb',event=>{
   if(event.total>0)loading.textContent='LOADING CHARACTER  '+Math.round(event.loaded/event.total*100)+'%';
  });
@@ -205,7 +231,8 @@ async function loadLocalCharacters(){
  characterMixer=playerAnimation.mixer;characterActions=playerAnimation.actions;activeCharacterAction=playerAnimation.active;realCharacterLoaded=true;
  main.scene.traverse(o=>{if(o.isBone){playerBones.push(o);baseBonePose.set(o,{rotation:o.rotation.clone(),position:o.position.clone()})}});
  for(const [name,action] of Object.entries(characterActions)){action.setLoop(THREE.LoopRepeat,Infinity);action.clampWhenFinished=false}
- if(activeCharacterAction)activeCharacterAction.paused=true;
+ if(activeCharacterAction){activeCharacterAction.paused=false;activeCharacterAction.play();}
+ await preloadOpponentCharacters();
  loading.remove();
  tick();
  console.info('Loaded playable avatar:',main.animations.map(a=>a.name));
@@ -216,16 +243,16 @@ const gameMenu=document.getElementById('gameMenu'),gameHud=document.getElementBy
 const roundTimeEl=document.getElementById('roundTime'),teamScoreEl=document.getElementById('teamScore'),roundModeEl=document.getElementById('roundMode'),roundStatusEl=document.getElementById('roundStatus');
 document.querySelectorAll('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>{selectedMode=Number(btn.dataset.mode);document.querySelectorAll('.mode-btn').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));document.getElementById('modeDescription').textContent=selectedMode===1?'One seeker hunts you. Survive for 60 seconds.':'Two seekers hunt your team. You and an AI teammate must survive for 60 seconds.';}));
 function showToast(message){gameToast.textContent=message;gameToast.style.display='block';roundToastUntil=performance.now()+1900}
-function makeRunner(color){
- const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CapsuleGeometry(.34,.72,4,8),new THREE.MeshStandardMaterial({color,roughness:.85})),head=new THREE.Mesh(new THREE.SphereGeometry(.24,12,10),new THREE.MeshStandardMaterial({color:0xc8ad8d}));
- body.position.y=1.05;head.position.y=1.82;g.add(body,head);body.castShadow=head.castShadow=true;scene.add(g);return g;
+function makeRunner(index,x,z){
+ const template=opponentTemplates[index%opponentTemplates.length];
+ return createAnimatedOpponent(template,x,z);
 }
 function resetRound(){
- seekers.forEach(s=>scene.remove(s));seekers=[];if(teammate)scene.remove(teammate);teammate=null;
+ seekers.forEach(s=>scene.remove(s.group));seekers=[];if(teammate)scene.remove(teammate.group);teammate=null;
  player.position.set(-105,0,0);player.rotation.y=0;vy=0;onGround=true;roundRemaining=60;roundScore=0;roundClock=0;roundEnded=false;roundActive=true;
  const count=selectedMode===1?1:2;
- for(let i=0;i<count;i++){const bot=makeRunner(i?0x9b7651:0x8d9b79);bot.position.set(-91-i*3,0,(i%2?3:-3));seekers.push({group:bot,speed:2.15+i*.22,phase:i*1.7,stun:0});}
- if(selectedMode===2){teammate=makeRunner(0x718aa0);teammate.position.set(-109,0,-3);}
+ for(let i=0;i<count;i++){const bot=makeRunner(i,-91-i*3,(i%2?3:-3));bot.speed=2.15+i*.22;seekers.push(bot);}
+ if(selectedMode===2){teammate=makeRunner(2,-109,-3);}
  roundModeEl.textContent=selectedMode===1?'1v1':'2v2';roundTimeEl.textContent='60';teamScoreEl.textContent='0';roundStatusEl.textContent='HIDE';
  gameMenu.style.display='none';gameHud.style.display='flex';showToast('RUN. USE THE TREES AND ROCKS FOR COVER.');
 }
@@ -248,9 +275,10 @@ function updateRound(dt,elapsed){
   if(dist>.95){bot.group.position.x+=dx/dist*speed*dt;bot.group.position.z+=dz/dist*speed*dt;}
   bot.group.position.z=THREE.MathUtils.clamp(bot.group.position.z,-6,6);
   bot.group.rotation.y=Math.atan2(dx,dz);
+  setOpponentLocomotion(bot,dist>.95);if(bot.mixer)bot.mixer.update(dt);
   if(dist<1.25&&player.position.y<1.2){finishRound(false);return;}
  }
- if(teammate){const nearest=seekers.reduce((best,b)=>Math.hypot(b.group.position.x-teammate.position.x,b.group.position.z-teammate.position.z)<Math.hypot(best.group.position.x-teammate.position.x,best.group.position.z-teammate.position.z)?b:best,seekers[0]);const dx=teammate.position.x-nearest.group.position.x,dz=teammate.position.z-nearest.group.position.z,d=Math.hypot(dx,dz)||1;teammate.position.x+=dx/d*1.65*dt;teammate.position.z=THREE.MathUtils.clamp(teammate.position.z+dz/d*1.65*dt,-5.5,5.5);if(Math.hypot(teammate.position.x-nearest.group.position.x,teammate.position.z-nearest.group.position.z)<1.1)teammate.visible=false;}
+ if(teammate){const nearest=seekers.reduce((best,b)=>Math.hypot(b.group.position.x-teammate.group.position.x,b.group.position.z-teammate.group.position.z)<Math.hypot(best.group.position.x-teammate.group.position.x,best.group.position.z-teammate.group.position.z)?b:best,seekers[0]);const dx=teammate.group.position.x-nearest.group.position.x,dz=teammate.group.position.z-nearest.group.position.z,d=Math.hypot(dx,dz)||1;teammate.group.position.x+=dx/d*1.65*dt;teammate.group.position.z=THREE.MathUtils.clamp(teammate.group.position.z+dz/d*1.65*dt,-5.5,5.5);teammate.group.rotation.y=Math.atan2(dx,dz);setOpponentLocomotion(teammate,true);if(teammate.mixer)teammate.mixer.update(dt);if(Math.hypot(teammate.group.position.x-nearest.group.position.x,teammate.group.position.z-nearest.group.position.z)<1.1)teammate.group.visible=false;}
  if(roundRemaining<=0)finishRound(true);
 }
 
@@ -311,9 +339,8 @@ else{
   activeCharacterAction=next;
  }
  if(characterMixer)characterMixer.update(dt);
- // Animation clips may contain vertical root motion. Keep the animated model's
- // lowest point aligned to the physical player's feet after every mixer update.
- if(playableAvatar){playableAvatar.updateMatrixWorld(true);const feetBounds=new THREE.Box3().setFromObject(playableAvatar);const footError=feetBounds.min.y-player.position.y;if(Number.isFinite(footError))playableAvatar.position.y-=footError;}
+ // Keep the GLB root fixed to the player's physical origin. Recalculating
+ // its bounding box every frame made leg animation lift the whole character.
  if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)
 }
 const device=document.body.dataset.device||'desktop';const followDistance=device==='desktop'?14:device==='tablet'?18:24;const followHeight=device==='desktop'?4.1:device==='tablet'?4.7:5.2;desiredCam.set(player.position.x,player.position.y+followHeight,player.position.z+followDistance);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.15,player.position.z-4);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
