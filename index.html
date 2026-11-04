@@ -73,16 +73,16 @@ function addCharacterAnimations(gltf){
 }
 async function loadForestNpcs(){
  const npcSpecs=[
-  {file:'police-officer-rigged.glb',x:-7,z:-17},
+  {file:'police-officer-rigged.glb',x:-7,z:-17,height:1.8},
   {file:'soldier-rigged.glb',x:7,z:-29},
   {file:'cyborg-rigged.glb',x:-9,z:-43},
-  {file:'ninja-rigged.glb',x:9,z:-56}
+  {file:'ninja-rigged.glb',x:9,z:-56,height:1.8}
  ];
  window.forestNpcMixers=window.forestNpcMixers||[];
  for(const spec of npcSpecs){
   try{
    const gltf=await assetLoader.loadAsync('/models/'+spec.file);
-   const npc=fitCharacter(gltf.scene,1.55);npc.position.set(spec.x,0,spec.z);scene.add(npc);
+   const npc=fitCharacter(gltf.scene,spec.height||1.55);npc.position.set(spec.x,0,spec.z);scene.add(npc);
    const animation=addCharacterAnimations(gltf);
    if(animation.active)animation.active.timeScale=.65;
    window.forestNpcMixers.push(animation.mixer);
