@@ -161,7 +161,7 @@ if(player.position.x>5&&lastChapter<2){lastChapter=2;worldState.rain=.85}
 if(player.position.x>58&&lastChapter<3){lastChapter=3}
 const nearRadio=player.position.distanceTo(radio.position)<3.2;
 const nearCrate=Math.abs(player.position.x-crate.position.x)<1.75&&player.position.y<1.2;
-interactButton.style.display=(nearRadio&&!worldState.radioFound)||nearCrate?'block':'none';
+interactButton.style.display='none';
 if(grabHeld&&nearCrate&&!crateHeld){crateHeld=true}
 if(!grabHeld)crateHeld=false;
 if(crateHeld){crate.position.x=THREE.MathUtils.damp(crate.position.x,player.position.x+Math.sign(player.rotation.y)*1.15,12,dt);crateVelocity=0}
