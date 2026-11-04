@@ -13,7 +13,6 @@
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import JSZip from 'https://cdn.jsdelivr.net/npm/jszip@3.10.1/+esm';
 const host=document.querySelector('#scene'),loading=document.querySelector('#loading');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x7f9080);scene.fog=new THREE.FogExp2(0x7f9080,.014);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,260);
@@ -41,31 +40,40 @@ const shadow=new THREE.Mesh(new THREE.CircleGeometry(.62,20),new THREE.MeshBasic
 const keys={};let jumpQueued=false;addEventListener('keydown',e=>{const k=e.key.toLowerCase();keys[k]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(k))e.preventDefault();if(k===' '&&!e.repeat)jumpQueued=true});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
 function bindButton(id,key,jump=false){const b=document.getElementById(id),down=e=>{e.preventDefault();keys[key]=true;if(jump)jumpQueued=true},up=e=>{e.preventDefault();keys[key]=false};b.addEventListener('pointerdown',down);['pointerup','pointercancel','pointerleave'].forEach(ev=>b.addEventListener(ev,up))}
 bindButton('left','a');bindButton('right','d');bindButton('forward','w');bindButton('back','s');bindButton('jump',' ',true);
-let characterMixer=null,characterActions={},activeCharacterAction=null,realCharacterLoaded=false;const assetLoader=new GLTFLoader();
-async function searchFreeAsset(query,accept){const u='https://3d.shep.bot/v1/search?q='+encodeURIComponent(query)+'&type=model&free=true&downloadable=true&limit=16',r=await fetch(u);if(!r.ok)throw new Error('Asset search failed: '+r.status);const data=await r.json(),items=(data.results||[]).filter(a=>a.downloadable!==false&&a.price?.free!==false&&a.license?.commercialUse!==false);return items.find(accept)||null}
-async function loadAssetModel(asset){if(!asset)throw new Error('No suitable free model found');const format=(asset.formats||[]).includes('glb')?'glb':'gltf',url='https://3d.shep.bot/v1/assets/'+encodeURIComponent(asset.id)+'/download?format='+format+'&resolution=1k',response=await fetch(url);if(!response.ok)throw new Error('Model download failed: '+asset.title);const bytes=await response.arrayBuffer(),parse=(data,path='')=>new Promise((resolve,reject)=>assetLoader.parse(data,path,resolve,reject)),isGlb=bytes.byteLength>4&&new TextDecoder().decode(new Uint8Array(bytes,0,4))==='glTF';if(isGlb)return parse(bytes);const zip=await JSZip.loadAsync(bytes),entries=Object.keys(zip.files).filter(k=>!zip.files[k].dir),gltfPath=entries.find(k=>k.toLowerCase().endsWith('.gltf'));if(!gltfPath)throw new Error('No glTF model in package: '+asset.title);const json=JSON.parse(await zip.file(gltfPath).async('string')),root=gltfPath.includes('/')?gltfPath.slice(0,gltfPath.lastIndexOf('/')+1):'',objectUrls=[];const resolveFile=async uri=>{if(!uri||uri.startsWith('data:')||/^https?:/i.test(uri))return uri;const decoded=decodeURIComponent(uri.split('?')[0]);let entry=zip.file(root+decoded)||zip.file(decoded);if(!entry){const base=decoded.split('/').pop(),found=entries.find(k=>k===base||k.endsWith('/'+base));if(found)entry=zip.file(found)}if(!entry)return uri;const blob=await entry.async('blob'),blobUrl=URL.createObjectURL(blob);objectUrls.push(blobUrl);return blobUrl};for(const b of json.buffers||[])if(b.uri)b.uri=await resolveFile(b.uri);for(const im of json.images||[])if(im.uri)im.uri=await resolveFile(im.uri);const gltf=await parse(JSON.stringify(json));gltf.userData.assetObjectUrls=objectUrls;return gltf}
+let characterMixer=null,characterActions={},activeCharacterAction=null,realCharacterLoaded=false,avatarMoving=false;const assetLoader=new GLTFLoader();
 function enableModelShadows(root){root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.needsUpdate=true}}}})}
-function addForestInstances(root,count,min,max,sideRange=34){const box=new THREE.Box3().setFromObject(root),height=Math.max(.01,box.max.y-box.min.y);for(let i=0;i<count;i++){const clone=root.clone(true),scale=(min+Math.random()*(max-min))/height;clone.scale.setScalar(scale);clone.position.set((Math.random()<.5?-1:1)*(5+Math.random()*sideRange),-box.min.y*scale,12-Math.random()*155);clone.rotation.y=Math.random()*Math.PI*2;enableModelShadows(clone);scene.add(clone)}}
-async function loadRealWorldAssets(){
- loading.textContent='DOWNLOADING CC0 FOREST MODELS…';
- const [treeAsset,fernAsset,rockAsset,humanAsset]=await Promise.all([
-  searchFreeAsset('realistic game ready forest tree model',a=>/tree/i.test(a.title)&&/cc0/i.test(a.license?.name||'')&&(a.polyCount||0)>15000&&(a.polyCount||0)<450000),
-  searchFreeAsset('realistic fern plant 3D model',a=>/fern/i.test(a.title)&&/cc0/i.test(a.license?.name||'')),
-  searchFreeAsset('mossy forest rock 3D model',a=>/rock|boulder/i.test(a.title)&&/cc0/i.test(a.license?.name||'')),
-  searchFreeAsset('realistic adult male human character rigged walk run',a=>a.rigged&&/man|human|male/i.test(a.title+' '+(a.description||''))&&/cc0/i.test(a.license?.name||'')&&/shirt|clothes|clothing|casual/i.test(a.title+' '+(a.description||'')))
- ]);
- const loaded=await Promise.allSettled([treeAsset&&loadAssetModel(treeAsset),fernAsset&&loadAssetModel(fernAsset),rockAsset&&loadAssetModel(rockAsset),humanAsset&&loadAssetModel(humanAsset)]);
- if(loaded[0].status==='fulfilled'&&loaded[0].value){const model=loaded[0].value.scene;enableModelShadows(model);for(const g of proceduralTrees)scene.remove(g);addForestInstances(model,18,5.5,9,38);console.info('Tree:',treeAsset.title,treeAsset.license?.name)}
- if(loaded[1].status==='fulfilled'&&loaded[1].value){const model=loaded[1].value.scene;enableModelShadows(model);for(const g of proceduralFerns)scene.remove(g);addForestInstances(model,24,.65,1.4,22);console.info('Fern:',fernAsset.title)}
- if(loaded[2].status==='fulfilled'&&loaded[2].value){const model=loaded[2].value.scene;enableModelShadows(model);for(const g of proceduralRocks)scene.remove(g);addForestInstances(model,18,.4,1.4,24);console.info('Rock:',rockAsset.title)}
- if(loaded[3].status==='fulfilled'&&loaded[3].value){const gltf=loaded[3].value,model=gltf.scene,box=new THREE.Box3().setFromObject(model),height=box.max.y-box.min.y;model.scale.setScalar(1.78/Math.max(.01,height));const scaledBox=new THREE.Box3().setFromObject(model);model.position.y-=scaledBox.min.y;player.children.forEach(o=>o.visible=false);player.add(model);enableModelShadows(model);characterMixer=new THREE.AnimationMixer(model);for(const clip of gltf.animations||[])characterActions[clip.name.toLowerCase()]=characterMixer.clipAction(clip);const idle=Object.keys(characterActions).find(k=>k.includes('idle'))||Object.keys(characterActions)[0];if(idle){activeCharacterAction=characterActions[idle];activeCharacterAction.play()}realCharacterLoaded=true;console.info('Human:',humanAsset.title,humanAsset.license?.name)}
- const failures=loaded.filter(x=>x.status==='rejected').length;if(failures)console.warn('Some external CC0 assets were unavailable; placeholder geometry remains for those objects.');
-}
-let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();
+function fitCharacter(root,targetHeight=1.82){const box=new THREE.Box3().setFromObject(root),height=Math.max(.001,box.max.y-box.min.y);root.scale.setScalar(targetHeight/height);const fitted=new THREE.Box3().setFromObject(root),center=new THREE.Vector3();fitted.getCenter(center);root.position.x-=center.x;root.position.z-=center.z;root.position.y-=fitted.min.y;enableModelShadows(root);return root}
+function addCharacterAnimations(gltf,isPlayer=false){const root=gltf.scene;const mixer=new THREE.AnimationMixer(root);const actions={};for(const clip of gltf.animations||[]){const key=clip.name.toLowerCase();actions[key]=mixer.clipAction(clip)}const first=Object.keys(actions)[0];let active=null;if(first){active=actions[first];active.play();active.paused=true}return {mixer,actions,active}}
+async function loadLocalCharacters(){
+ loading.textContent='LOADING YOUR 3D CHARACTERS…';
+ const main=await assetLoader.loadAsync('/models/man-rigged.glb');
+ const avatar=fitCharacter(main.scene,1.82);
+ player.children.forEach(o=>{if(o!==shadow){o.visible=false}});
+ player.add(avatar);
+ const playerAnimation=addCharacterAnimations(main,true);
+ characterMixer=playerAnimation.mixer;characterActions=playerAnimation.actions;activeCharacterAction=playerAnimation.active;realCharacterLoaded=true;
+ console.info('Loaded playable avatar: /models/man-rigged.glb',main.animations.map(a=>a.name));
+ const npcSpecs=[
+  {file:'police-officer-rigged.glb',x:-7,z:-17,scale:1.8},
+  {file:'soldier-rigged.glb',x:7,z:-29,scale:1.8},
+  {file:'cyborg-rigged.glb',x:-9,z:-43,scale:1.8},
+  {file:'ninja-rigged.glb',x:9,z:-56,scale:1.8}
+ ];
+ const results=await Promise.allSettled(npcSpecs.map(async spec=>{
+  const gltf=await assetLoader.loadAsync('/models/'+spec.file);
+  const npc=fitCharacter(gltf.scene,spec.scale);npc.position.set(spec.x,0,spec.z);scene.add(npc);
+  const animation=addCharacterAnimations(gltf);if(animation.active)animation.active.paused=true;
+  console.info('Loaded forest NPC:',spec.file,gltf.animations.map(a=>a.name));
+  return {npc,mixer:animation.mixer};
+ }));
+ window.forestNpcMixers=results.filter(r=>r.status==='fulfilled').map(r=>r.value.mixer);
+ const failed=results.filter(r=>r.status==='rejected');
+ if(failed.length)console.warn('Some NPC models could not load:',failed.length);
+}let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),moving=Math.hypot(forward,side)>0,speed=5.2;if(moving){const len=Math.hypot(forward,side),dx=side/len,dz=-forward/len;player.position.x+=dx*speed*dt;player.position.z+=dz*speed*dt;player.rotation.y=Math.atan2(dx,dz);walk+=dt*9}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-78,78);player.position.z=THREE.MathUtils.clamp(player.position.z,-105,35);
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
-const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('walk')||k.includes('run')):k.includes('idle'));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];next.reset().fadeIn(.18).play();if(activeCharacterAction)activeCharacterAction.fadeOut(.18);activeCharacterAction=next}if(characterMixer)characterMixer.update(dt)}
+const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
 desiredCam.set(player.position.x*.72,player.position.y+4.5,player.position.z+8.5);camera.position.lerp(desiredCam,1-Math.exp(-4*dt));lookAt.set(player.position.x,player.position.y+1.1,player.position.z-2);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight)});
-loadRealWorldAssets().catch(err=>console.error('External asset pipeline failed:',err)).finally(()=>{loading.remove();tick()});
+loadLocalCharacters().catch(err=>{console.error('Local character loading failed:',err);loading.textContent='CHARACTER MODEL FAILED TO LOAD · CHECK /models FILES';setTimeout(()=>{loading.remove();tick()},1800)}).then(()=>{loading.remove();tick()});
 </script></body></html>
