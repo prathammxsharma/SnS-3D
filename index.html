@@ -16,7 +16,7 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 const host=document.querySelector('#scene'),loading=document.querySelector('#loading');
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x7f9080);scene.fog=new THREE.FogExp2(0x7f9080,.014);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,300);
-const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.15));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;host.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?.85:1.15));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;host.appendChild(renderer.domElement);
 scene.add(new THREE.HemisphereLight(0xc5d2c4,0x263128,1.25));
 const sun=new THREE.DirectionalLight(0xffe5bd,1.9);sun.position.set(-35,55,24);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
 const fill=new THREE.DirectionalLight(0xa9c7cb,1);fill.position.set(30,18,-35);scene.add(fill);
@@ -32,21 +32,21 @@ const celestial=new THREE.Group();scene.add(celestial);
 const sunDisc=new THREE.Mesh(new THREE.SphereGeometry(3.4,16,12),new THREE.MeshBasicMaterial({color:0xffdf9b}));celestial.add(sunDisc);
 const moonDisc=new THREE.Mesh(new THREE.SphereGeometry(2.1,16,12),new THREE.MeshBasicMaterial({color:0xe3e9f2}));celestial.add(moonDisc);
 const cloudMat=new THREE.MeshStandardMaterial({color:0xe3e4df,roughness:1,transparent:true,opacity:.86});
-const cloudGroups=[];for(let i=0;i<18;i++){const cloud=new THREE.Group();const count=4+Math.floor(rand()*5);for(let j=0;j<count;j++){const puff=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),cloudMat);puff.position.set((j-count/2)*1.8,rand()*1.1,rand()*1.3);puff.scale.set(1.8+rand()*1.5,.65+rand()*.5,1+rand()*.8);cloud.add(puff)}cloud.position.set(-110+rand()*220,24+rand()*18,-35-rand()*55);scene.add(cloud);cloudGroups.push(cloud)}
+const cloudGroups=[];for(let i=0;i<8;i++){const cloud=new THREE.Group();const count=4+Math.floor(rand()*5);for(let j=0;j<count;j++){const puff=new THREE.Mesh(new THREE.IcosahedronGeometry(1,1),cloudMat);puff.position.set((j-count/2)*1.8,rand()*1.1,rand()*1.3);puff.scale.set(1.8+rand()*1.5,.65+rand()*.5,1+rand()*.8);cloud.add(puff)}cloud.position.set(-110+rand()*220,24+rand()*18,-35-rand()*55);scene.add(cloud);cloudGroups.push(cloud)}
 const mountainMat=mat(0x586b65),mountains=new THREE.Group();for(let i=0;i<28;i++){const m=new THREE.Mesh(new THREE.ConeGeometry(10+rand()*16,18+rand()*28,5),mountainMat);m.position.set(-130+i*10,-1,-78-rand()*12);m.rotation.y=rand()*6;mountains.add(m)}scene.add(mountains);
 const starGeo=new THREE.BufferGeometry(),starPts=[];for(let i=0;i<220;i++)starPts.push((rand()-.5)*320,25+rand()*85,-95-rand()*20);starGeo.setAttribute('position',new THREE.Float32BufferAttribute(starPts,3));const stars=new THREE.Points(starGeo,new THREE.PointsMaterial({color:0xf2f0df,size:.55,transparent:true,opacity:0}));scene.add(stars);
-const groundGeo=new THREE.PlaneGeometry(250,100,90,60);groundGeo.rotateX(-Math.PI/2);const pos=groundGeo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,Math.sin(x*.18)*.12+Math.cos(z*.14)*.1+Math.sin((x+z)*.08)*.08)}groundGeo.computeVertexNormals();const ground=new THREE.Mesh(groundGeo,groundMat);ground.receiveShadow=true;scene.add(ground);
+const groundGeo=new THREE.PlaneGeometry(250,100,42,24);groundGeo.rotateX(-Math.PI/2);const pos=groundGeo.attributes.position;for(let i=0;i<pos.count;i++){const x=pos.getX(i),z=pos.getZ(i);pos.setY(i,Math.sin(x*.18)*.12+Math.cos(z*.14)*.1+Math.sin((x+z)*.08)*.08)}groundGeo.computeVertexNormals();const ground=new THREE.Mesh(groundGeo,groundMat);ground.receiveShadow=true;scene.add(ground);
 const path=new THREE.Mesh(new THREE.PlaneGeometry(250,5.4),pathMat);path.rotation.x=-Math.PI/2;path.position.set(0,.025,0);path.receiveShadow=true;scene.add(path);
 const trunkGeo=new THREE.CylinderGeometry(.22,.42,1,8),crownGeo=new THREE.IcosahedronGeometry(1,0),proceduralTrees=[];
-const treeTrunks=new THREE.InstancedMesh(trunkGeo,barkMat,90);
-const treeCrowns=leafMats.map(m=>new THREE.InstancedMesh(crownGeo,m,90*25));
+const treeTrunks=new THREE.InstancedMesh(trunkGeo,barkMat,48);
+const treeCrowns=leafMats.map(m=>new THREE.InstancedMesh(crownGeo,m,48*14));
 treeTrunks.castShadow=false;treeCrowns.forEach(m=>m.castShadow=false);
 const treeDummy=new THREE.Object3D(),treeCounts=[0,0,0,0];let trunkCount=0;
-for(let i=0;i<90;i++){
+for(let i=0;i<48;i++){
  const x=-112+rand()*224,z=-13-rand()*34,s=1.45+rand()*1.05;
  treeDummy.position.set(x,s*2.4,z);treeDummy.scale.set(s*.82,s*4.8,s*.82);treeDummy.rotation.set(0,rand()*6.28,0);treeDummy.updateMatrix();treeTrunks.setMatrixAt(trunkCount++,treeDummy.matrix);
- for(let j=0;j<25;j++){
-  const ring=j<9?0:1,angle=rand()*Math.PI*2,rad=s*(.22+rand()*(ring?1.05:.62));
+ for(let j=0;j<14;j++){
+  const ring=j<5?0:1,angle=rand()*Math.PI*2,rad=s*(.22+rand()*(ring?1.05:.62));
   const k=s*(.36+rand()*.34),mi=Math.floor(rand()*leafMats.length),mesh=treeCrowns[mi];
   treeDummy.position.set(x+Math.cos(angle)*rad,s*(2.65+rand()*3),z+Math.sin(angle)*rad);
   treeDummy.scale.set(k*(.8+rand()*.7),k*(.7+rand()*.65),k*(.8+rand()*.55));
@@ -60,7 +60,7 @@ const fernMat=mat(0x536b45),proceduralFerns=[];for(let i=0;i<48;i++){const x=-11
 const worldState={wind:0.35,windDirection:new THREE.Vector3(1,0,.25).normalize(),rain:0,wetness:0,temperature:18,chapter:0,radioFound:false};
 let lastChapter=-1;
 const windLeaves=proceduralFerns.map((g,i)=>({g,phase:rand()*6.28,base:g.rotation.z}));
-const rainCount=650,rainPositions=new Float32Array(rainCount*3),rainGeo=new THREE.BufferGeometry();
+const rainCount=150,rainPositions=new Float32Array(rainCount*3),rainGeo=new THREE.BufferGeometry();
 for(let i=0;i<rainCount;i++){rainPositions[i*3]=(rand()-.5)*34;rainPositions[i*3+1]=rand()*18;rainPositions[i*3+2]=(rand()-.5)*42}
 rainGeo.setAttribute('position',new THREE.BufferAttribute(rainPositions,3));
 const rainMat=new THREE.PointsMaterial({color:0xc5d8d6,size:.075,transparent:true,opacity:0,depthWrite:false});
@@ -152,7 +152,7 @@ async function loadForestNpcs(){
  }
 }
 async function loadLocalCharacters(){
- loading.textContent='LOADING PLAYER…';
+ loading.textContent='';loading.remove();tick();
  const main=await assetLoader.loadAsync('/models/man-rigged.glb');
  const avatar=fitCharacter(main.scene,1.55);
  player.children.forEach(o=>{if(o!==shadow)o.visible=false});
@@ -161,9 +161,7 @@ async function loadLocalCharacters(){
  characterMixer=playerAnimation.mixer;characterActions=playerAnimation.actions;activeCharacterAction=playerAnimation.active;realCharacterLoaded=true;
  if(activeCharacterAction)activeCharacterAction.paused=true;
  console.info('Loaded playable avatar:',main.animations.map(a=>a.name));
- loading.remove();
- tick();
- // Level 01 is a solitary environmental journey; no combat NPCs are spawned.
+  // Level 01 is a solitary environmental journey; no combat NPCs are spawned.
 }let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-105,0,0);
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
 const elapsed=clock.elapsedTime;
@@ -185,10 +183,9 @@ worldState.wetness=THREE.MathUtils.damp(worldState.wetness,worldState.rain, .12,
 rainMat.opacity=worldState.rain*.62;
 rainField.position.copy(player.position);rainField.position.y+=4;
 const rp=rainGeo.attributes.position;
-for(let i=0;i<rainCount;i++){let x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i);y-=dt*(13+worldState.rain*7);x+=worldState.wind*worldState.windDirection.x*dt*2.2;z+=worldState.wind*worldState.windDirection.z*dt*2.2;if(y<0){y=16+rand()*3;x=(rand()-.5)*34;z=(rand()-.5)*42}rp.setXYZ(i,x,y,z)}
-rp.needsUpdate=true;
+if(worldState.rain>.025){const arr=rp.array;for(let i=0;i<rainCount;i++){const j=i*3;arr[j+1]-=dt*(13+worldState.rain*7);arr[j]+=worldState.wind*worldState.windDirection.x*dt*2.2;arr[j+2]+=worldState.wind*worldState.windDirection.z*dt*2.2;if(arr[j+1]<0){arr[j+1]=16+rand()*3;arr[j]=(rand()-.5)*34;arr[j+2]=(rand()-.5)*42}}rp.needsUpdate=true;}
 for(const item of windLeaves){item.g.rotation.z=item.base+Math.sin(elapsed*1.8+item.phase)*worldState.wind*.12;item.g.rotation.x=Math.cos(elapsed*1.2+item.phase)*worldState.wind*.045}
-for(let i=0;i<waterPositions.count;i++){const x=waterPositions.getX(i),z=waterPositions.getZ(i);waterPositions.setY(i,Math.sin(elapsed*2.1+z*.22+x*.7)*.025+Math.sin(elapsed*1.2-z*.1)*.012)}waterPositions.needsUpdate=true;stream.geometry.computeVertexNormals();
+for(let i=0;i<waterPositions.count;i++){const x=waterPositions.getX(i),z=waterPositions.getZ(i);waterPositions.setY(i,Math.sin(elapsed*2.1+z*.22+x*.7)*.025+Math.sin(elapsed*1.2-z*.1)*.012)}waterPositions.needsUpdate=true;
 if(player.position.x> -45&&lastChapter<1){lastChapter=1;worldState.wind=1.1}
 if(player.position.x>5&&lastChapter<2){lastChapter=2;worldState.rain=.85}
 if(player.position.x>58&&lastChapter<3){lastChapter=3}
@@ -206,6 +203,6 @@ if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateH
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
 desiredCam.set(player.position.x,player.position.y+5.2,player.position.z+24);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.05,player.position.z-5);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
-addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.15));renderer.setSize(innerWidth,innerHeight)});
-loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);loading.textContent='PLAYER MODEL FAILED TO LOAD';setTimeout(()=>{loading.remove();tick()},1800)});
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<700?.85:1.15));renderer.setSize(innerWidth,innerHeight)});
+loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);});
 </script></body></html>
