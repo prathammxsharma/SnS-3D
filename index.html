@@ -48,12 +48,12 @@ const host=document.querySelector('#scene'),loading=document.querySelector('#loa
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x7f9080);scene.fog=new THREE.FogExp2(0x7f9080,.014);
 const camera=new THREE.PerspectiveCamera(68,innerWidth/innerHeight,.1,300);
 function getDeviceClass(){const coarse=matchMedia('(pointer: coarse)').matches||navigator.maxTouchPoints>0;if(!coarse)return 'desktop';return Math.min(innerWidth,innerHeight)<700?'mobile':'tablet'}
-function applyDeviceLayout(){const device=getDeviceClass();document.body.dataset.device=device;const dpr=device==='mobile'?Math.min(devicePixelRatio,1):device==='tablet'?Math.min(devicePixelRatio,1.2):Math.min(devicePixelRatio,1.6);renderer.setPixelRatio(dpr);renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=device==='mobile'?64:device==='tablet'?62:58;camera.updateProjectionMatrix()}
+function applyDeviceLayout(){const device=getDeviceClass();document.body.dataset.device=device;const dpr=device==='mobile'?Math.min(devicePixelRatio,1):device==='tablet'?Math.min(devicePixelRatio,1.2):Math.min(devicePixelRatio,1.5);renderer.setPixelRatio(dpr);renderer.setSize(innerWidth,innerHeight);camera.aspect=innerWidth/innerHeight;camera.fov=device==='mobile'?64:device==='tablet'?58:48;camera.updateProjectionMatrix()}
 document.body.dataset.device=getDeviceClass();
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.2));renderer.setSize(innerWidth,innerHeight);applyDeviceLayout();renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;host.appendChild(renderer.domElement);
-scene.add(new THREE.HemisphereLight(0xc5d2c4,0x263128,1.25));
-const sun=new THREE.DirectionalLight(0xffe5bd,1.9);sun.position.set(-35,55,24);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
-const fill=new THREE.DirectionalLight(0xa9c7cb,1);fill.position.set(30,18,-35);scene.add(fill);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(devicePixelRatio,1.2));renderer.setSize(innerWidth,innerHeight);applyDeviceLayout();renderer.shadowMap.enabled=false;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.28;host.appendChild(renderer.domElement);
+scene.add(new THREE.HemisphereLight(0xe3edff,0x46513d,1.9));scene.add(new THREE.AmbientLight(0xffffff,.38));
+const sun=new THREE.DirectionalLight(0xffedcf,2.35);sun.position.set(-35,55,24);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-55;sun.shadow.camera.right=55;sun.shadow.camera.top=55;sun.shadow.camera.bottom=-55;sun.shadow.bias=-.00025;scene.add(sun);scene.add(sun.target);
+const fill=new THREE.DirectionalLight(0xc0d9e8,1.45);fill.position.set(30,18,-35);scene.add(fill);
 let seed=841;function rand(){seed=(seed*1664525+1013904223)>>>0;return seed/4294967296}
 const mat=(color,rough=.9)=>new THREE.MeshStandardMaterial({color,roughness:rough});
 function noiseTexture(base,variation=22){const c=document.createElement('canvas');c.width=c.height=512;const ctx=c.getContext('2d');ctx.fillStyle=base;ctx.fillRect(0,0,512,512);for(let i=0;i<17000;i++){const v=Math.floor(90+rand()*100);ctx.fillStyle='rgba('+v+','+v+','+v+','+(rand()*.11)+')';const x=rand()*512,y=rand()*512,r=1+rand()*variation/8;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}const tex=new THREE.CanvasTexture(c);tex.wrapS=tex.wrapT=THREE.RepeatWrapping;tex.repeat.set(9,9);tex.colorSpace=THREE.SRGBColorSpace;return tex}
@@ -198,7 +198,7 @@ async function loadLocalCharacters(){
 }let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-105,0,0);
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
 const elapsed=clock.elapsedTime;
-const cycle=(elapsed/240)%1,solar=Math.sin(cycle*Math.PI*2-Math.PI/2),day=THREE.MathUtils.smoothstep(solar,-.18,.28),night=1-day;
+const cycle=(elapsed/600+.5)%1,solar=Math.sin(cycle*Math.PI*2-Math.PI/2),day=THREE.MathUtils.smoothstep(solar,-.18,.28),night=1-day;
 const dawn=THREE.MathUtils.smoothstep(solar,-.35,.08)*(1-THREE.MathUtils.smoothstep(solar,.08,.4));
 const topColor=new THREE.Color().setRGB(.025+.22*day+.24*dawn,.045+.38*day+.17*dawn,.11+.55*day+.12*dawn);
 const horizonColor=new THREE.Color().setRGB(.06+.58*day+.55*dawn,.08+.58*day+.27*dawn,.15+.52*day+.12*dawn);
@@ -235,7 +235,7 @@ const horizontal=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||ke
 if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateHeld&&nearCrate&&horizontal>0)crateVelocity=horizontal*(runHeld?3.4:1.8);
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
-desiredCam.set(player.position.x,player.position.y+5.2,player.position.z+24);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.05,player.position.z-5);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
+const device=document.body.dataset.device||'desktop';const followDistance=device==='desktop'?14:device==='tablet'?18:24;const followHeight=device==='desktop'?4.1:device==='tablet'?4.7:5.2;desiredCam.set(player.position.x,player.position.y+followHeight,player.position.z+followDistance);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.15,player.position.z-4);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
 addEventListener('resize',applyDeviceLayout);addEventListener('orientationchange',()=>setTimeout(applyDeviceLayout,120));
 loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);});
 </script></body></html>
