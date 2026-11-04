@@ -148,7 +148,7 @@ function bindHold(el,set){el.addEventListener('pointerdown',e=>{e.preventDefault
 bindHold(runButton,v=>runHeld=v);bindHold(grabButton,v=>grabHeld=v);
 addEventListener('keydown',e=>{if(e.key==='Shift')runHeld=true;if(e.key.toLowerCase()==='e')grabHeld=true});addEventListener('keyup',e=>{if(e.key==='Shift')runHeld=false;if(e.key.toLowerCase()==='e')grabHeld=false});
 const jumpButton=document.getElementById('jump');jumpButton.addEventListener('pointerdown',e=>{e.preventDefault();jumpQueued=true});
-let characterMixer=null,characterActions={},activeCharacterAction=null,realCharacterLoaded=false,avatarMoving=false;
+let characterMixer=null,characterActions={},activeCharacterAction=null,realCharacterLoaded=false,avatarMoving=false,playableAvatar=null;
 let transientActionUntil=0,previousGrabHeld=false,playerBones=[],baseBonePose=new Map();
 const assetLoader=new GLTFLoader();
 function enableModelShadows(root){root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.needsUpdate=true}}}})}
@@ -193,7 +193,7 @@ async function loadLocalCharacters(){
   if(event.total>0)loading.textContent='LOADING CHARACTER  '+Math.round(event.loaded/event.total*100)+'%';
  });
  const avatar=fitCharacter(main.scene,1.55);
- player.add(avatar);
+ player.add(avatar);playableAvatar=avatar;
  const playerAnimation=addCharacterAnimations(main);
  characterMixer=playerAnimation.mixer;characterActions=playerAnimation.actions;activeCharacterAction=playerAnimation.active;realCharacterLoaded=true;
  main.scene.traverse(o=>{if(o.isBone){playerBones.push(o);baseBonePose.set(o,{rotation:o.rotation.clone(),position:o.position.clone()})}});
@@ -260,6 +260,9 @@ else{
   activeCharacterAction=next;
  }
  if(characterMixer)characterMixer.update(dt);
+ // Animation clips may contain vertical root motion. Keep the animated model's
+ // lowest point aligned to the physical player's feet after every mixer update.
+ if(playableAvatar){playableAvatar.updateMatrixWorld(true);const feetBounds=new THREE.Box3().setFromObject(playableAvatar);const footError=feetBounds.min.y-player.position.y;if(Number.isFinite(footError))playableAvatar.position.y-=footError;}
  if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)
 }
 const device=document.body.dataset.device||'desktop';const followDistance=device==='desktop'?14:device==='tablet'?18:24;const followHeight=device==='desktop'?4.1:device==='tablet'?4.7:5.2;desiredCam.set(player.position.x,player.position.y+followHeight,player.position.z+followDistance);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.15,player.position.z-4);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
