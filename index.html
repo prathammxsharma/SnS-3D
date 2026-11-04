@@ -185,16 +185,20 @@ async function loadForestNpcs(){
  }
 }
 async function loadLocalCharacters(){
- loading.textContent='';loading.remove();tick();
- const main=await assetLoader.loadAsync('/models/man-rigged.glb');
- const avatar=fitCharacter(main.scene,1.55);
  player.children.forEach(o=>{if(o!==shadow)o.visible=false});
+ loading.textContent='LOADING CHARACTER…';
+ const main=await assetLoader.loadAsync('/models/man-rigged.glb',event=>{
+  if(event.total>0)loading.textContent='LOADING CHARACTER  '+Math.round(event.loaded/event.total*100)+'%';
+ });
+ const avatar=fitCharacter(main.scene,1.55);
  player.add(avatar);
  const playerAnimation=addCharacterAnimations(main);
  characterMixer=playerAnimation.mixer;characterActions=playerAnimation.actions;activeCharacterAction=playerAnimation.active;realCharacterLoaded=true;
  if(activeCharacterAction)activeCharacterAction.paused=true;
+ loading.remove();
+ tick();
  console.info('Loaded playable avatar:',main.animations.map(a=>a.name));
-  // Level 01 is a solitary environmental journey; no combat NPCs are spawned.
+ // Level 01 is a solitary environmental journey; no combat NPCs are spawned.
 }let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-105,0,0);
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
 const elapsed=clock.elapsedTime;
@@ -237,5 +241,5 @@ if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
 const device=document.body.dataset.device||'desktop';const followDistance=device==='desktop'?14:device==='tablet'?18:24;const followHeight=device==='desktop'?4.1:device==='tablet'?4.7:5.2;desiredCam.set(player.position.x,player.position.y+followHeight,player.position.z+followDistance);camera.position.lerp(desiredCam,1-Math.exp(-4.5*dt));lookAt.set(player.position.x,player.position.y+1.15,player.position.z-4);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
 addEventListener('resize',applyDeviceLayout);addEventListener('orientationchange',()=>setTimeout(applyDeviceLayout,120));
-loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);});
+loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);loading.textContent='CHARACTER COULD NOT LOAD · REFRESH TO RETRY';});
 </script></body></html>
