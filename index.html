@@ -42,38 +42,60 @@ function bindButton(id,key,jump=false){const b=document.getElementById(id),down=
 bindButton('left','a');bindButton('right','d');bindButton('forward','w');bindButton('back','s');bindButton('jump',' ',true);
 let characterMixer=null,characterActions={},activeCharacterAction=null,realCharacterLoaded=false,avatarMoving=false;const assetLoader=new GLTFLoader();
 function enableModelShadows(root){root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(o.material){const materials=Array.isArray(o.material)?o.material:[o.material];for(const m of materials){if(m.map)m.map.colorSpace=THREE.SRGBColorSpace;m.needsUpdate=true}}}})}
-function fitCharacter(root,targetHeight=1.82){const box=new THREE.Box3().setFromObject(root),height=Math.max(.001,box.max.y-box.min.y);root.scale.setScalar(targetHeight/height);const fitted=new THREE.Box3().setFromObject(root),center=new THREE.Vector3();fitted.getCenter(center);root.position.x-=center.x;root.position.z-=center.z;root.position.y-=fitted.min.y;enableModelShadows(root);return root}
-function addCharacterAnimations(gltf,isPlayer=false){const root=gltf.scene;const mixer=new THREE.AnimationMixer(root);const actions={};for(const clip of gltf.animations||[]){const key=clip.name.toLowerCase();actions[key]=mixer.clipAction(clip)}const first=Object.keys(actions)[0];let active=null;if(first){active=actions[first];active.play();active.paused=true}return {mixer,actions,active}}
-async function loadLocalCharacters(){
- loading.textContent='LOADING YOUR 3D CHARACTERS…';
- const main=await assetLoader.loadAsync('/models/man-rigged.glb');
- const avatar=fitCharacter(main.scene,1.82);
- player.children.forEach(o=>{if(o!==shadow){o.visible=false}});
- player.add(avatar);
- const playerAnimation=addCharacterAnimations(main,true);
- characterMixer=playerAnimation.mixer;characterActions=playerAnimation.actions;activeCharacterAction=playerAnimation.active;realCharacterLoaded=true;
- console.info('Loaded playable avatar: /models/man-rigged.glb',main.animations.map(a=>a.name));
+function fitCharacter(root,targetHeight=1.35){
+ const box=new THREE.Box3().setFromObject(root),height=Math.max(.001,box.max.y-box.min.y);
+ root.scale.setScalar(targetHeight/height);
+ const fitted=new THREE.Box3().setFromObject(root),center=new THREE.Vector3();fitted.getCenter(center);
+ root.position.x-=center.x;root.position.z-=center.z;root.position.y-=fitted.min.y;
+ enableModelShadows(root);return root;
+}
+function addCharacterAnimations(gltf){
+ const mixer=new THREE.AnimationMixer(gltf.scene),actions={};
+ for(const clip of gltf.animations||[]){const key=clip.name.toLowerCase();actions[key]=mixer.clipAction(clip)}
+ const keys=Object.keys(actions),preferred=keys.find(k=>k.includes('walk'))||keys.find(k=>k.includes('run'))||keys[0];
+ const active=preferred?actions[preferred]:null;
+ if(active){active.reset();active.enabled=true;active.paused=false;active.play()}
+ return {mixer,actions,active};
+}
+async function loadForestNpcs(){
  const npcSpecs=[
-  {file:'police-officer-rigged.glb',x:-7,z:-17,scale:1.8},
-  {file:'soldier-rigged.glb',x:7,z:-29,scale:1.8},
-  {file:'cyborg-rigged.glb',x:-9,z:-43,scale:1.8},
-  {file:'ninja-rigged.glb',x:9,z:-56,scale:1.8}
+  {file:'police-officer-rigged.glb',x:-7,z:-17},
+  {file:'soldier-rigged.glb',x:7,z:-29},
+  {file:'cyborg-rigged.glb',x:-9,z:-43},
+  {file:'ninja-rigged.glb',x:9,z:-56}
  ];
- const results=await Promise.allSettled(npcSpecs.map(async spec=>{
-  const gltf=await assetLoader.loadAsync('/models/'+spec.file);
-  const npc=fitCharacter(gltf.scene,spec.scale);npc.position.set(spec.x,0,spec.z);scene.add(npc);
-  const animation=addCharacterAnimations(gltf);if(animation.active)animation.active.paused=true;
-  console.info('Loaded forest NPC:',spec.file,gltf.animations.map(a=>a.name));
-  return {npc,mixer:animation.mixer};
- }));
- window.forestNpcMixers=results.filter(r=>r.status==='fulfilled').map(r=>r.value.mixer);
- const failed=results.filter(r=>r.status==='rejected');
- if(failed.length)console.warn('Some NPC models could not load:',failed.length);
+ window.forestNpcMixers=window.forestNpcMixers||[];
+ for(const spec of npcSpecs){
+  try{
+   const gltf=await assetLoader.loadAsync('/models/'+spec.file);
+   const npc=fitCharacter(gltf.scene,1.35);npc.position.set(spec.x,0,spec.z);scene.add(npc);
+   const animation=addCharacterAnimations(gltf);
+   if(animation.active)animation.active.timeScale=.65;
+   window.forestNpcMixers.push(animation.mixer);
+   console.info('Loaded animated forest NPC:',spec.file,gltf.animations.map(a=>a.name));
+  }catch(err){console.warn('NPC model failed:',spec.file,err)}
+ }
+}
+async function loadLocalCharacters(){
+ loading.textContent='LOADING PLAYER…';
+ const main=await assetLoader.loadAsync('/models/man-rigged.glb');
+ const avatar=fitCharacter(main.scene,1.35);
+ player.children.forEach(o=>{if(o!==shadow)o.visible=false});
+ player.add(avatar);
+ const playerAnimation=addCharacterAnimations(main);
+ characterMixer=playerAnimation.mixer;characterActions=playerAnimation.actions;activeCharacterAction=playerAnimation.active;realCharacterLoaded=true;
+ if(activeCharacterAction)activeCharacterAction.paused=true;
+ console.info('Loaded playable avatar:',main.animations.map(a=>a.name));
+ loading.remove();
+ tick();
+ // Start the world immediately; stream NPCs in one at a time after the player appears.
+ loading.textContent='LOADING FOREST CHARACTERS…';
+ loadForestNpcs().catch(err=>console.warn('NPC loading interrupted:',err));
 }let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0),moving=Math.hypot(forward,side)>0,speed=5.2;if(moving){const len=Math.hypot(forward,side),dx=side/len,dz=-forward/len;player.position.x+=dx*speed*dt;player.position.z+=dz*speed*dt;player.rotation.y=Math.atan2(dx,dz);walk+=dt*9}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-78,78);player.position.z=THREE.MathUtils.clamp(player.position.z,-105,35);
 if(jumpQueued&&onGround){vy=7.2;onGround=false}jumpQueued=false;vy-=18*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}
 const swing=moving&&onGround?Math.sin(walk)*.48:0;if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}else{const wanted=Object.keys(characterActions).find(k=>moving?(k.includes('run')||k.includes('walk')):(k.includes('idle')));if(wanted&&characterActions[wanted]!==activeCharacterAction){const next=characterActions[wanted];if(activeCharacterAction){activeCharacterAction.stop()}next.reset();next.paused=false;next.play();activeCharacterAction=next}else if(activeCharacterAction){activeCharacterAction.paused=!moving}if(characterMixer)characterMixer.update(dt);if(window.forestNpcMixers)for(const mixer of window.forestNpcMixers)mixer.update(dt)}
 desiredCam.set(player.position.x*.72,player.position.y+4.5,player.position.z+8.5);camera.position.lerp(desiredCam,1-Math.exp(-4*dt));lookAt.set(player.position.x,player.position.y+1.1,player.position.z-2);camera.lookAt(lookAt);sun.position.x=player.position.x-35;sun.position.z=player.position.z+24;sun.target.position.copy(player.position);renderer.render(scene,camera)}
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.setSize(innerWidth,innerHeight)});
-loadLocalCharacters().catch(err=>{console.error('Local character loading failed:',err);loading.textContent='CHARACTER MODEL FAILED TO LOAD · CHECK /models FILES';setTimeout(()=>{loading.remove();tick()},1800)}).then(()=>{loading.remove();tick()});
+loadLocalCharacters().catch(err=>{console.error('Local player model failed:',err);loading.textContent='PLAYER MODEL FAILED TO LOAD';setTimeout(()=>{loading.remove();tick()},1800)});
 </script></body></html>
