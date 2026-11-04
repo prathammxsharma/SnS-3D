@@ -36,11 +36,18 @@ body[data-device="tablet"] .grab{bottom:calc(env(safe-area-inset-bottom) + 212px
  body[data-device="tablet"] .jump,body[data-device="tablet"] .run,body[data-device="tablet"] .grab{width:60px;height:60px;right:18px}
  body[data-device="tablet"] .jump{bottom:14px}body[data-device="tablet"] .run{bottom:82px}body[data-device="tablet"] .grab{bottom:150px}
 }
+
+.game-menu{position:fixed;inset:0;z-index:8;display:grid;place-items:center;padding:22px;background:linear-gradient(135deg,#07110ddd,#101915aa);backdrop-filter:blur(10px);color:#eee8d8}
+.game-panel{width:min(560px,100%);padding:clamp(22px,5vw,38px);border:1px solid #d9d2b44d;border-radius:22px;background:#111b17ed;box-shadow:0 24px 80px #0008}
+.game-kicker{font-size:10px;letter-spacing:.28em;color:#b6c19c}.game-title{font-size:clamp(34px,7vw,58px);line-height:.98;letter-spacing:-.055em;margin:12px 0}.game-copy{color:#b9c1b2;font-size:14px;line-height:1.6}
+.mode-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:24px 0 14px}.mode-btn,.start-btn{border:1px solid #a9b69a66;border-radius:12px;padding:14px;background:#202d25;color:#f1ead8;font:inherit;cursor:pointer}.mode-btn[aria-pressed=true]{background:#506448;border-color:#c5d5a0}.start-btn{width:100%;background:#d2d8b1;color:#172018;font-weight:800;letter-spacing:.08em;padding:16px}.game-hud{position:fixed;z-index:5;top:max(14px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);display:none;gap:14px;align-items:center;padding:10px 16px;border:1px solid #e5dec355;border-radius:12px;background:#101915c9;color:#eee8d8;font-size:12px;white-space:nowrap;backdrop-filter:blur(8px);pointer-events:none}.game-hud strong{font-variant-numeric:tabular-nums}.game-toast{position:fixed;z-index:6;left:50%;top:22%;transform:translateX(-50%);padding:10px 16px;border-radius:10px;background:#101915dd;color:#f5f0df;font-size:13px;display:none;pointer-events:none}
+body[data-device="mobile"] .game-hud{font-size:10px;gap:8px;padding:8px 10px;top:8px}
+@media(max-width:380px){.game-hud{gap:6px;font-size:9px}.game-panel{padding:20px}}
 </style>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 </head>
-<body><div id="loading">PREPARING THE FOREST…</div><div id="scene"></div>
-<div class="hud"><div class="desktop-controls"><kbd>A</kbd><kbd>D</kbd> / <kbd>←</kbd><kbd>→</kbd> Move<br><kbd>SHIFT</kbd> Run · <kbd>SPACE</kbd> Jump<br><kbd>E</kbd> Grab / Interact</div><div class="mobile-controls"><div id="stickBase" class="stick-base" aria-label="Move left and right"><div id="stickKnob" class="stick-knob"></div></div><button id="jump" class="jump" aria-label="Jump">↑</button><button id="run" class="run" aria-label="Run">»</button><button id="grab" class="grab" aria-label="Grab or interact">✋</button></div></div>
+<body><div id="loading">PREPARING THE FOREST…</div><div id="scene"></div><div id="gameMenu" class="game-menu"><section class="game-panel"><div class="game-kicker">FOREST FIELD CHALLENGE</div><div class="game-title">HIDE.<br>MOVE.<br>OUTLAST.</div><p class="game-copy">A cross-platform 3D hide-and-seek challenge. Evade the seekers, use the forest for cover and survive the round. No combat mechanics.</p><div class="mode-row"><button class="mode-btn" data-mode="1" aria-pressed="true">1v1 · DUEL</button><button class="mode-btn" data-mode="2" aria-pressed="false">2v2 · TEAM</button></div><p class="game-copy" id="modeDescription">One seeker hunts you. Survive for 60 seconds.</p><button id="startRound" class="start-btn">START ROUND</button><p class="game-copy" style="font-size:11px;margin:14px 0 0">PC: WASD / arrows · Shift to run · Space to jump<br>Mobile/tablet: joystick + action buttons</p></section></div><div id="gameHud" class="game-hud"><span>ROUND <strong id="roundMode">1v1</strong></span><span>TIME <strong id="roundTime">60</strong></span><span>TEAM <strong id="teamScore">0</strong></span><span id="roundStatus">HIDE</span></div><div id="gameToast" class="game-toast"></div>
+<div class="hud"><div class="desktop-controls"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> Move · limited depth<br><kbd>SHIFT</kbd> Run · <kbd>SPACE</kbd> Jump<br><kbd>E</kbd> Grab / Interact</div><div class="mobile-controls"><div id="stickBase" class="stick-base" aria-label="Move left and right"><div id="stickKnob" class="stick-knob"></div></div><button id="jump" class="jump" aria-label="Jump">↑</button><button id="run" class="run" aria-label="Run">»</button><button id="grab" class="grab" aria-label="Grab or interact">✋</button></div></div>
 <script type="module">
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
@@ -203,7 +210,50 @@ async function loadLocalCharacters(){
  tick();
  console.info('Loaded playable avatar:',main.animations.map(a=>a.name));
  // Level 01 is a solitary environmental journey; no combat NPCs are spawned.
-}let vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-105,0,0);
+}
+let selectedMode=1,roundActive=false,roundEnded=false,roundRemaining=60,roundScore=0,roundClock=0,seekers=[],teammate=null,roundToastUntil=0;
+const gameMenu=document.getElementById('gameMenu'),gameHud=document.getElementById('gameHud'),gameToast=document.getElementById('gameToast');
+const roundTimeEl=document.getElementById('roundTime'),teamScoreEl=document.getElementById('teamScore'),roundModeEl=document.getElementById('roundMode'),roundStatusEl=document.getElementById('roundStatus');
+document.querySelectorAll('.mode-btn').forEach(btn=>btn.addEventListener('click',()=>{selectedMode=Number(btn.dataset.mode);document.querySelectorAll('.mode-btn').forEach(b=>b.setAttribute('aria-pressed',String(b===btn)));document.getElementById('modeDescription').textContent=selectedMode===1?'One seeker hunts you. Survive for 60 seconds.':'Two seekers hunt your team. You and an AI teammate must survive for 60 seconds.';}));
+function showToast(message){gameToast.textContent=message;gameToast.style.display='block';roundToastUntil=performance.now()+1900}
+function makeRunner(color){
+ const g=new THREE.Group(),body=new THREE.Mesh(new THREE.CapsuleGeometry(.34,.72,4,8),new THREE.MeshStandardMaterial({color,roughness:.85})),head=new THREE.Mesh(new THREE.SphereGeometry(.24,12,10),new THREE.MeshStandardMaterial({color:0xc8ad8d}));
+ body.position.y=1.05;head.position.y=1.82;g.add(body,head);body.castShadow=head.castShadow=true;scene.add(g);return g;
+}
+function resetRound(){
+ seekers.forEach(s=>scene.remove(s));seekers=[];if(teammate)scene.remove(teammate);teammate=null;
+ player.position.set(-105,0,0);player.rotation.y=0;vy=0;onGround=true;roundRemaining=60;roundScore=0;roundClock=0;roundEnded=false;roundActive=true;
+ const count=selectedMode===1?1:2;
+ for(let i=0;i<count;i++){const bot=makeRunner(i?0x9b7651:0x8d9b79);bot.position.set(-91-i*3,0,(i%2?3:-3));seekers.push({group:bot,speed:2.15+i*.22,phase:i*1.7,stun:0});}
+ if(selectedMode===2){teammate=makeRunner(0x718aa0);teammate.position.set(-109,0,-3);}
+ roundModeEl.textContent=selectedMode===1?'1v1':'2v2';roundTimeEl.textContent='60';teamScoreEl.textContent='0';roundStatusEl.textContent='HIDE';
+ gameMenu.style.display='none';gameHud.style.display='flex';showToast('RUN. USE THE TREES AND ROCKS FOR COVER.');
+}
+function finishRound(won){
+ if(roundEnded)return;roundEnded=true;roundActive=false;roundStatusEl.textContent=won?'SURVIVED':'CAUGHT';
+ if(won){roundScore+=selectedMode===1?100:160;let coins=Number(localStorage.getItem('forestCoins')||0)+Math.round(roundScore/10);localStorage.setItem('forestCoins',String(coins));showToast('ROUND SURVIVED · +'+Math.round(roundScore/10)+' COINS');}
+ else showToast('CAUGHT · TRY A DIFFERENT ROUTE');
+ setTimeout(()=>{gameMenu.style.display='grid';gameHud.style.display='none';document.querySelector('.game-title').innerHTML=won?'NICE<br>ESCAPE.':'TRY<br>AGAIN.';document.querySelector('.game-copy').textContent='Score: '+roundScore+' · Coins: '+(localStorage.getItem('forestCoins')||'0')+'. Choose a mode and start another round.';document.getElementById('startRound').textContent='PLAY AGAIN';},1700);
+}
+document.getElementById('startRound').addEventListener('click',()=>{document.querySelector('.game-title').innerHTML='HIDE.<br>MOVE.<br>OUTLAST.';document.querySelector('.game-copy').textContent='Evade the seekers, use the forest for cover and survive the round. No combat mechanics.';document.getElementById('startRound').textContent='START ROUND';resetRound();});
+function updateRound(dt,elapsed){
+ if(!roundActive)return;
+ roundRemaining=Math.max(0,roundRemaining-dt);roundClock+=dt;roundTimeEl.textContent=String(Math.ceil(roundRemaining));
+ roundScore=Math.floor(roundClock*2);teamScoreEl.textContent=String(roundScore);
+ for(const bot of seekers){
+  if(bot.stun>0){bot.stun-=dt;continue;}
+  const dx=player.position.x-bot.group.position.x,dz=player.position.z-bot.group.position.z,dist=Math.hypot(dx,dz);
+  const cover=Math.abs(player.position.z)>3.7?.65:1;
+  const speed=bot.speed*cover*(dist<5?1.18:1);
+  if(dist>.95){bot.group.position.x+=dx/dist*speed*dt;bot.group.position.z+=dz/dist*speed*dt;}
+  bot.group.position.z=THREE.MathUtils.clamp(bot.group.position.z,-6,6);
+  bot.group.rotation.y=Math.atan2(dx,dz);
+  if(dist<1.25&&player.position.y<1.2){finishRound(false);return;}
+ }
+ if(teammate){const nearest=seekers.reduce((best,b)=>Math.hypot(b.group.position.x-teammate.position.x,b.group.position.z-teammate.position.z)<Math.hypot(best.group.position.x-teammate.position.x,best.group.position.z-teammate.position.z)?b:best,seekers[0]);const dx=teammate.position.x-nearest.group.position.x,dz=teammate.position.z-nearest.group.position.z,d=Math.hypot(dx,dz)||1;teammate.position.x+=dx/d*1.65*dt;teammate.position.z=THREE.MathUtils.clamp(teammate.position.z+dz/d*1.65*dt,-5.5,5.5);if(Math.hypot(teammate.position.x-nearest.group.position.x,teammate.position.z-nearest.group.position.z)<1.1)teammate.visible=false;}
+ if(roundRemaining<=0)finishRound(true);
+}
+\nlet vy=0,onGround=true,walk=0;const clock=new THREE.Clock(),desiredCam=new THREE.Vector3(),lookAt=new THREE.Vector3();player.position.set(-105,0,0);
 function tick(){requestAnimationFrame(tick);const dt=Math.min(clock.getDelta(),.035);
 const elapsed=clock.elapsedTime;
 const cycle=(elapsed/600+.5)%1,solar=Math.sin(cycle*Math.PI*2-Math.PI/2),day=THREE.MathUtils.smoothstep(solar,-.18,.28),night=1-day;
@@ -239,8 +289,8 @@ if(crateHeld){crate.position.x=THREE.MathUtils.damp(crate.position.x,player.posi
 else{crateVelocity*=Math.exp(-3.8*dt);crate.position.x+=crateVelocity*dt}
 crate.position.y=THREE.MathUtils.damp(crate.position.y,.58,12,dt);
 
-const horizontal=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),moving=Math.abs(horizontal)>.12,speed=runHeld?8.4:4.8;if(moving){const windPush=worldState.wind*.18*worldState.windDirection.x;player.position.x+=(horizontal*speed+windPush)*dt;player.rotation.y=horizontal>0?Math.PI/2:-Math.PI/2;walk+=dt*(runHeld?14:9)}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-120,124);player.position.z=0;
-if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateHeld&&nearCrate&&horizontal>0)crateVelocity=horizontal*(runHeld?3.4:1.8);
+const horizontal=THREE.MathUtils.clamp((keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+virtualStick.x,-1,1),depth=THREE.MathUtils.clamp((keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0)-virtualStick.y,-1,1),moving=Math.abs(horizontal)>.12,speed=runHeld?8.4:4.8;if(moving){const windPush=worldState.wind*.18*worldState.windDirection.x;player.position.x+=(horizontal*speed+windPush)*dt;player.rotation.y=horizontal>0?Math.PI/2:-Math.PI/2;walk+=dt*(runHeld?14:9)}else walk=0;player.position.x=THREE.MathUtils.clamp(player.position.x,-120,124);player.position.z=THREE.MathUtils.clamp(player.position.z+depth*speed*dt,-6,6);
+if(roundActive)updateRound(dt,elapsed);if(grabHeld&&nearRadio&&!worldState.radioFound)examineRadio();if(moving&&!crateHeld&&nearCrate&&horizontal>0)crateVelocity=horizontal*(runHeld?3.4:1.8);
 if(jumpQueued&&onGround){vy=5.25;onGround=false}jumpQueued=false;vy-=22*dt;player.position.y+=vy*dt;if(player.position.y<=0){player.position.y=0;vy=0;onGround=true}shadow.position.set(player.position.x,.035,player.position.z);const shadowScale=1+Math.min(player.position.y*.22,.42);shadow.scale.set(shadowScale,shadowScale,shadowScale);shadow.material.opacity=.34/(1+player.position.y*.8);
 const swing=moving&&onGround?Math.sin(walk)*.48:0;
 if(!realCharacterLoaded){armL.rotation.x=swing;armR.rotation.x=-swing;legL.rotation.x=-swing;legR.rotation.x=swing}
